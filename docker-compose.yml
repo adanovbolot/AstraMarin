@@ -1,0 +1,16 @@
+version: '3.7'
+
+services:
+  web:
+    build: ./
+    container_name: django
+    restart: always
+    command: bash entrypoint.sh
+    volumes:
+      - .:/usr/src/app
+      - ./static:/usr/src/app/static
+      - ./media:/usr/src/app/media
+    ports:
+      - 8000:8000
+    env_file:
+      - ./.env
