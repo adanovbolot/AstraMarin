@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_yasg',
     'corsheaders',
+    'django_crontab',
 
     'server',
 ]
@@ -114,3 +115,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
     ],
 }
+
+CRONJOBS = [
+    ('0 0 * * *', 'server.cron.logout_users')
+]

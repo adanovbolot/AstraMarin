@@ -9,6 +9,7 @@ RUN apt-get update
 
 COPY ./requirements.txt /usr/src/app/
 
+RUN apt-get -y install cron
 RUN pip install -r requirements.txt
 
 COPY . /usr/src/app/
