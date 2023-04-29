@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'corsheaders',
     'django_crontab',
+    'django_cron',
 
     'server',
 ]
