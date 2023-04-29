@@ -105,7 +105,7 @@ class PointsSale(models.Model):
         verbose_name_plural = 'Точки продажи'
 
     operator = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Оператор')
-    landing_places = models.ManyToManyField(LandingPlaces, verbose_name='Посадочное место', related_name='landing_places_name')
+    landing_places = models.ManyToManyField(LandingPlaces, verbose_name='Посадочное место')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
     left_at = models.DateTimeField(null=True, blank=True, verbose_name='Дата выхода')
 
