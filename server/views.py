@@ -1,51 +1,48 @@
-from .models import User
+import re
+from datetime import datetime
+
+from django.utils import timezone
+from rest_framework.exceptions import NotFound
+
 from .permissions import CreateUserPermission
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, serializers
 from django.contrib.auth import authenticate, login, logout
 from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.response import Response
+from PIL import Image
+from pyzbar import pyzbar
 from .models import (
-    LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User
+    LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule
 )
-from .serializers import \
-    (UserSerializer, CreateUserSerializer, UserLoginSerializer, PriceSerializer,
-     PriceTypesSerializer, TicketsCreateSerializer, TicketsListSerializer,
-     LandingPlacesSerializer, PointsSaleSerializer, PointsSaleCreateSerializer)
+from .serializers import (
+    UserSerializer, CreateUserSerializer, UserLoginSerializer, PriceSerializer, PriceTypesSerializer,
+    TicketsCreateSerializer, TicketsListSerializer, LandingPlacesSerializer, PointsSaleCreateSerializer,
+    PointsSaleSerializer, PointsSaleEndStatus, ShipAllSerializer, ShipScheduleSerializer, ShipScheduleGetAllSerializer,
+    TicketSerializer
+)
 
 
 class OperatorsList(generics.ListAPIView):
     queryset = User.objects.all()
-    serializer_class = UserSerializer
+    serializer_class = UserLoginSerializer
     permission_classes = [permissions.IsAdminUser]
 
 
 class OperatorsDetailUpdateDelete(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
-    serializer_class = UserLoginSerializer
+    serializer_class = UserSerializer
     permission_classes = [permissions.IsAdminUser]
+    lookup_field = 'pk'
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response({"Сообщение": "Оператор успешно удален."}, status=status.HTTP_204_NO_CONTENT)
 
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        return Response({"Сообщение": "Оператор успешно обновлен."})
-
     def partial_update(self, request, *args, **kwargs):
         kwargs['partial'] = True
         return self.update(request, *args, **kwargs)
-
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
 
 
 class OperatorAuthorization(APIView):
@@ -128,13 +125,7 @@ class PriceUpdateDelete(generics.RetrieveUpdateDestroyAPIView):
         return Response({'Сообщение': 'Цена успешно удалена.'}, status=status.HTTP_204_NO_CONTENT)
 
 
-class PriceTypesList(generics.ListAPIView):
-    queryset = PriceTypes.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
-    serializer_class = PriceTypesSerializer
-
-
-class PriceTypesCreate(generics.CreateAPIView):
+class PriceTypesCreate(generics.ListCreateAPIView):
     serializer_class = PriceTypesSerializer
     queryset = PriceTypes.objects.all()
     permission_classes = [permissions.IsAuthenticated]
@@ -242,20 +233,110 @@ class PointsSaleList(generics.ListAPIView):
     queryset = PointsSale.objects.all()
 
 
-class PointsSaleUpdateDelete(generics.RetrieveUpdateDestroyAPIView):
+class PointsSaleUpdate(generics.UpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class = PointsSaleCreateSerializer
+    serializer_class = PointsSaleEndStatus
     queryset = PointsSale.objects.all()
 
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        return Response({'Сообщение': 'Объект успешно обновлен.'}, status=status.HTTP_200_OK)
+    def perform_update(self, serializer):
+        if serializer.validated_data.get('complete_the_work_day', False):
+            instance = serializer.save()
+            instance.left_at = timezone.now()
+            instance.status = 2
+            instance.save()
+            logout(self.request)
+            return Response({'Сообщение': 'Смена закрыта и вы вышли из системы.'}, status=status.HTTP_200_OK)
+        else:
+            serializer.save()
+            return Response({'Сообщение': 'Статус смены активен.'}, status=status.HTTP_200_OK)
+
+    def get_object(self):
+        operator = self.request.user
+        obj = PointsSale.objects.get(operator=operator)
+        return obj
+
+
+class ShipAll(generics.ListAPIView):
+    queryset = Ship.objects.all()
+    serializer_class = ShipAllSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class ShipCreate(generics.CreateAPIView):
+    queryset = Ship.objects.all()
+    serializer_class = ShipAllSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save()
+        return Response({'Сообщение': 'Корабль успешно создан.'}, status=status.HTTP_201_CREATED)
+
+
+class ShipUpdateDelete(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Ship.objects.all()
+    serializer_class = ShipAllSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
-        return Response({'Сообщение': 'Объект успешно удален.'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({"Сообщение": "Судно успешно удалено."}, status=status.HTTP_204_NO_CONTENT)
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response({"Сообщение": "Судно успешно обновлено."})
+
+
+class ShipScheduleCreate(generics.CreateAPIView):
+    queryset = ShipSchedule.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ShipScheduleSerializer
+
+
+class ShipScheduleGetAll(generics.ListAPIView):
+    queryset = ShipSchedule.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ShipScheduleGetAllSerializer
+
+
+class ShipScheduleUpdateDelete(generics.RetrieveUpdateDestroyAPIView):
+    queryset = ShipSchedule.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ShipScheduleSerializer
+
+    def update(self, request, *args, **kwargs):
+        response = super().update(request, *args, **kwargs)
+        message = f"График отправления с id {kwargs['pk']} был успешно обновлен"
+        return Response({'Сообщение': message}, status=status.HTTP_200_OK)
+
+    def delete(self, request, *args, **kwargs):
+        response = super().delete(request, *args, **kwargs)
+        message = f"График отправления с id {kwargs['pk']} был успешно удален"
+        return Response({'Сообщение': message}, status=status.HTTP_204_NO_CONTENT)
+
+
+class TicketView(APIView):
+
+    def post(self, request):
+        serializer = TicketSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        parsed_data = serializer.data
+        ticket_verified = parsed_data.get('ticket_verified')
+        if ticket_verified == "True":
+            error_message = "Билет уже использован."
+            return Response({'Сообщение': error_message, 'data': parsed_data}, status=status.HTTP_400_BAD_REQUEST)
+        ticket_day = datetime.strptime(parsed_data.get('ticket_day'), "%Y-%m-%d").date()
+        ship_start_time = parsed_data.get('ship_start_time')
+        current_datetime = datetime.now()
+        current_date = current_datetime.date()
+        current_time = current_datetime.time()
+        if ticket_day < current_date or (ticket_day == current_date and ship_start_time <= current_time):
+            parsed_data['ticket_has_expired'] = True
+            error_message = "Билет просрочен."
+            return Response({'Сообщение': error_message, 'data': parsed_data}, status=status.HTTP_400_BAD_REQUEST)
+        parsed_data['ticket_verified'] = True
+        message = "Билет проверен и является действующим."
+        return Response({'Сообщение': message, 'data': parsed_data}, status=status.HTTP_200_OK)
