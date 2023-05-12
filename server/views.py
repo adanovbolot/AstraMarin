@@ -1,9 +1,7 @@
 import re
 from datetime import datetime
-
 from django.utils import timezone
 from rest_framework.exceptions import NotFound
-
 from .permissions import CreateUserPermission
 from rest_framework import generics, permissions, serializers
 from django.contrib.auth import authenticate, login, logout
@@ -11,7 +9,6 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
 from PIL import Image
-from pyzbar import pyzbar
 from .models import (
     LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule
 )
