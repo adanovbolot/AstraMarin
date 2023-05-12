@@ -1,14 +1,11 @@
-import re
 from datetime import datetime
 from django.utils import timezone
-from rest_framework.exceptions import NotFound
-from .permissions import CreateUserPermission
-from rest_framework import generics, permissions, serializers
+from .permissions import CreateUserPermission, IsSudovoditel
+from rest_framework import generics, permissions
 from django.contrib.auth import authenticate, login, logout
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
-from PIL import Image
 from .models import (
     LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule
 )
@@ -316,6 +313,7 @@ class ShipScheduleUpdateDelete(generics.RetrieveUpdateDestroyAPIView):
 
 
 class TicketView(APIView):
+    permission_classes = [IsSudovoditel]
 
     def post(self, request):
         serializer = TicketSerializer(data=request.data)

@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from server.element_select import USER_TYPE, CHILD_OR_ABULT, SHIFT_STATUS
 from server.manager import UserManager
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from decimal import Decimal
 import qrcode
@@ -52,14 +53,14 @@ class Price(models.Model):
     )
 
     def __str__(self):
-        return f"{self.price}"
+        return f"стоимость -- {self.price}"
 
 
 class PriceTypes(models.Model):
     class Meta:
         verbose_name = 'Тип цен'
         verbose_name_plural = 'Типы цен'
-        ordering = ('client_type',)
+        ordering = ('price',)
 
     client_type = models.CharField(
         max_length=10,
@@ -87,7 +88,8 @@ class Berths(models.Model):
         verbose_name='Причал',
         max_length=100,
         blank=True,
-        null=True
+        null=True,
+        unique = True,
     )
 
     def __str__(self):
@@ -401,11 +403,15 @@ class LandingPlaces(models.Model):
         blank=True,
         null=True
     )
-    objects = models.Manager()
 
-    @classmethod
-    def currently_working_places(cls):
-        return cls.objects.filter(currently_working=True)
+    @property
+    def can_use_currently_working(self):
+        return not self.currently_working
+
+    def get_currently_working_display(self):
+        if self.can_use_currently_working:
+            return self.currently_working
+        return 'Недоступно'
 
     def __str__(self):
         return f"{self.address}"
