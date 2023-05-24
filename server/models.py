@@ -1,9 +1,11 @@
+from datetime import date
+
+from django.contrib.auth import logout
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from server.element_select import USER_TYPE, CHILD_OR_ABULT, SHIFT_STATUS
 from server.manager import UserManager
 from django.utils import timezone
-from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from decimal import Decimal
 import qrcode
@@ -19,7 +21,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=255, unique=True, verbose_name='Логин')
     full_name = models.CharField(max_length=255, blank=True, null=True, verbose_name='Фамилия')
     inn = models.CharField(max_length=12, blank=True, null=True, unique=True, verbose_name='ИИН')
-    user_type = models.CharField(max_length=6, choices=USER_TYPE, verbose_name='Должность', default=2)
+    user_type = models.CharField(max_length=13, choices=USER_TYPE, verbose_name='Должность', default=2)
     is_active = models.BooleanField(default=False, verbose_name='Активный')
     is_staff = models.BooleanField(default=False, verbose_name='Персонал')
     is_superuser = models.BooleanField(default=False, verbose_name='Админ')
@@ -103,7 +105,7 @@ class Tickets(models.Model):
         ordering = ('created_at',)
 
     operator = models.ForeignKey(
-        User,
+        'PointsSale',
         on_delete=models.PROTECT,
         verbose_name='Оператор'
     )
@@ -140,12 +142,7 @@ class Tickets(models.Model):
         blank=True,
         null=True
     )
-    description_check = models.TextField(
-        verbose_name='Данные чека',
-        blank=True,
-        null=True
-    )
-    created_at = models.DateTimeField(
+    created_at = models.DateField(
         default=timezone.now,
         verbose_name='Дата создания'
     )
@@ -167,12 +164,6 @@ class Tickets(models.Model):
         null=True,
         default=False
     )
-    qr_code = models.ImageField(
-        verbose_name='QR код',
-        upload_to='tickets/qr_codes/',
-        null=True,
-        blank=True,
-    )
     check_qr_text = models.ImageField(
         verbose_name='Чек',
         blank=True,
@@ -186,154 +177,8 @@ class Tickets(models.Model):
         verbose_name='Билет проверен'
     )
 
-    def generate_check_image(self):
-        TEXT = \
-            f'АстраМарин\n' \
-            f'___________________________________\n' \
-            f'Билет №                   {self.pk}\n' \
-            f'\n' \
-            f' Дата создания:           {self.created_at}\n' \
-            f'___________________________________\n' \
-            f'Кассир:                   {self.operator}\n' \
-            f'\n' \
-            f'_ _ _ _Время начало и время окончания\n' \
-            f'_ _ _ _{self.ship.start_time} - - - -{self.ship.end_time}\n' \
-            f'\n' \
-            f'_ _ _ _ Причал:- - - - - - - - - - - -{self.ship.berths}\n' \
-            f'\n' \
-            f'_ _ _ _ Судно: - - - - - - - - - - - {self.ship.ship}\n' \
-            f'\n' \
-            f'_ _ _ _ Стоимость:- - - - - - - - - -{self.total_amount}\n' \
-            f'\n' \
-            f'_ _ _ _ День билета: - - - - - - - - {self.ticket_day}\n' \
-            f'\n' \
-            f'_ _ _ _ Количество взрослых:- - - - -{self.adult_quantity}\n' \
-            f'\n' \
-            f'_ _ _ _ Количество детей: - - - - - -{self.child_quantity}\n' \
-            f'\n' \
-            f'_ _ _ _ Площадка:- - - - - - - - - - {self.area}\n' \
-            f'\n' \
-            f'- - - - Купил: - - - - - - - - - - -  {self.bought}\n' \
-
-        data_str = f'id-{self.pk},\n' \
-                   f'operator-{self.operator},\n' \
-                   f'ticket_day-{self.ticket_day},\n' \
-                   f'ship-vessel-{self.ship.ship},\n' \
-                   f'ship-start_time{self.ship.start_time},\n' \
-                   f'ship-end_time-{self.ship.end_time},\n' \
-                   f'total_amount-{self.total_amount},\n' \
-                   f'area-{self.area},\n' \
-                   f'created_at-{self.created_at},\n' \
-                   f'bought-{self.bought},\n' \
-                   f'ticket_has_expired-{self.ticket_has_expired},\n' \
-
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
-            box_size=4,
-            border=1
-        )
-
-        qr.add_data(data_str)
-        qr.make(fit=True)
-        qr_img = qr.make_image(
-            fill_color='black',
-            back_color='white'
-        )
-
-        font_size = 15
-        font = ImageFont.truetype("arial.ttf", font_size)
-        text_width, text_height = font.getsize(TEXT)
-        check_img = Image.new('RGB', (qr_img.width + 400, qr_img.height + text_height + 500), color='white')
-        check_draw = ImageDraw.Draw(check_img)
-        check_draw.text((20, 20), TEXT, font=font, fill='black')
-
-        qr_x = (check_img.width - qr_img.width) // 2
-        qr_y = check_img.height - qr_img.height - 40
-        check_img.paste(qr_img, (qr_x, qr_y))
-
-        buffer = BytesIO()
-        check_img.save(buffer, format='PNG')
-        filename = f'check_qr_{self.pk}.png'
-        file = ContentFile(buffer.getvalue())
-        self.check_qr_text.save(filename, file, save=False)
-        buffer.close()
-
-    def save(self, *args, **kwargs):
-        if not self.pk:
-            super().save(*args, **kwargs)
-        total_price = Decimal('0')
-        for price_type in self.price_types.all():
-            if price_type.client_type == 'Ребенок':
-                total_price += price_type.price.price * self.child_quantity
-            elif price_type.client_type == 'Взрослый':
-                total_price += price_type.price.price * self.adult_quantity
-        self.total_amount = total_price
-        data_str = f'id-{self.pk}-\n' \
-                   f'operator-{self.operator}\n' \
-                   f'price_types-{self.price_types.all()}\n' \
-                   f'День билета: {self.ticket_day}' \
-                   f'created_at-{self.created_at}\n' \
-                   f'adult_quantity-{self.adult_quantity}\n' \
-                   f'child_quantity-{self.child_quantity}\n' \
-                   f'area-{self.area}\n' \
-                   f'ship-{self.ship}\n' \
-                   f'total_amount-{self.total_amount}\n' \
-
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
-            box_size=20,
-            border=4
-        )
-
-        qr.add_data(data_str)
-        qr.make(fit=True)
-        img = qr.make_image(
-            fill_color='black',
-            back_color='white'
-        )
-        buffer = BytesIO()
-        img.save(buffer)
-        filename = f'qr_code_{self.pk}.png'
-        file = ContentFile(buffer.getvalue())
-        self.qr_code.save(filename, file, save=False)
-        buffer.close()
-        price_type_str = ''
-        for price_type in self.price_types.all():
-            price_type_str += f'Тип клиента: {price_type.client_type}. Стоимость: {price_type.price}\n'
-
-        self.description_check = \
-            f'АстраМарин\n' \
-            f'___________________________________\n' \
-            f'Билет №                   {self.pk}\n' \
-            f'\n' \
-            f' Дата создания:           {self.created_at}\n' \
-            f'___________________________________\n' \
-            f'Кассир:                   {self.operator}\n' \
-            f'\n' \
-            f'_ _ _ _Время начало и время окончания\n' \
-            f'_ _ _ _{self.ship.start_time} - - - -{self.ship.end_time}\n' \
-            f'\n' \
-            f'_ _ _ _ Причал:- - - - - - - - - - - -{self.ship.berths}\n' \
-            f'\n' \
-            f'_ _ _ _ Судно: - - - - - - - - - - - {self.ship.ship}\n' \
-            f'\n' \
-            f'_ _ _ _ Стоимость:- - - - - - - - - -{self.total_amount} РУБЛЕЙ\n' \
-            f'\n' \
-            f'_ _ _ _ День билета: - - - - - - - - {self.ticket_day}\n' \
-            f'\n' \
-            f'_ _ _ _ Количество взрослых:- - - - -{self.adult_quantity}\n' \
-            f'\n' \
-            f'_ _ _ _ Количество детей: - - - - - -{self.child_quantity}\n' \
-            f'\n' \
-            f'_ _ _ _ Площадка:- - - - - - - - - - {self.area}\n' \
-
-        self.generate_check_image()
-        super().save(*args, **kwargs)
-
     def __str__(self):
-        return f"{'Куплен' if self.bought else 'Не куплен'}"
+        return f"{'Куплен' if self.bought else 'Не куплен'} --- {self.ship} --- {self.created_at}"
 
 
 class Ship(models.Model):
@@ -431,11 +276,11 @@ class PointsSale(models.Model):
         LandingPlaces,
         verbose_name='Посадочное место'
     )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
+    create_data = models.DateField(
+        default=date.today,
         verbose_name='Дата создания'
     )
-    left_at = models.DateTimeField(
+    left_at = models.DateField(
         null=True,
         blank=True,
         verbose_name='Дата выхода'
@@ -450,11 +295,53 @@ class PointsSale(models.Model):
         verbose_name='Статус смены',
         blank=True,
         null=True,
-        default=1,
+        default='Открытая смена',
         choices=SHIFT_STATUS,
-        max_length=3,
+        max_length=14,
     )
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.create_data = timezone.now().date()
+        if self.complete_the_work_day:
+            self.status = 'Архив'
+            logout(self.operator)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.operator}"
 
+
+class SalesСollection(models.Model):
+    class Meta:
+        verbose_name = 'Сбор продаж'
+        verbose_name_plural = 'Сбор продаж'
+
+    operator = models.ForeignKey(
+        PointsSale,
+        verbose_name='Оператор',
+        on_delete=models.PROTECT,
+    )
+    tickets = models.ManyToManyField(
+        Tickets,
+        verbose_name='Билеты',
+    )
+    sales_date = models.DateField(
+        verbose_name='Дата продаж',
+        auto_now_add=True
+    )
+    total_adult_quantity = models.PositiveIntegerField(
+        verbose_name='Общее количество взрослых'
+    )
+    total_child_quantity = models.PositiveIntegerField(
+        verbose_name='Общее количество детей'
+    )
+    total_amount = models.DecimalField(
+        verbose_name='Общая сумма',
+        decimal_places=2,
+        max_digits=12,
+        default=0,
+    )
+
+    def __str__(self):
+        return f"{self.operator}"

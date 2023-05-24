@@ -1,11 +1,14 @@
 from datetime import datetime
+
+from django.db.models.functions import TruncDate
 from django.utils import timezone
-from .permissions import CreateUserPermission, IsSudovoditel
+from .permissions import CreateUserPermission, IsSudovoditel, IsOperator
 from rest_framework import generics, permissions
 from django.contrib.auth import authenticate, login, logout
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 from .models import (
     LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule
 )
@@ -46,6 +49,15 @@ class OperatorAuthorization(APIView):
         user = authenticate(username=username, password=password)
         if user is not None and user.is_active:
             login(request, user)
+
+            operator = request.user
+            current_date = timezone.now().date()
+            points_sale = PointsSale.objects.filter(
+                operator=operator, created_at__date=current_date, status='Открытая смена'
+            ).first()
+
+            if not points_sale:
+                points_sale = PointsSale.objects.create(operator=operator, status='Открытая смена')
             return Response({'Сообщение': 'Вы успешно вошли в свой аккаунт!'},
                             status=status.HTTP_200_OK)
         else:
@@ -152,16 +164,19 @@ class PriceTypesUpdateDelete(generics.RetrieveUpdateDestroyAPIView):
 
 class TicketsCreate(generics.CreateAPIView):
     queryset = Tickets.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsOperator]
     serializer_class = TicketsCreateSerializer
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response({'Сообщение': 'Билет успешно создан.'},
-                        status=status.HTTP_201_CREATED, headers=headers)
+
+        response_data = {
+            "Сообщение": "Билет куплен",
+            "Билет": serializer.data
+        }
+        return Response(response_data, status=status.HTTP_201_CREATED)
 
 
 class TicketsList(generics.ListAPIView):
@@ -169,7 +184,7 @@ class TicketsList(generics.ListAPIView):
     serializer_class = TicketsListSerializer
 
     def get_queryset(self):
-        return Tickets.objects.filter(operator=self.request.user)
+        return Tickets.objects.filter(operator__operator=self.request.user)
 
 
 class LandingPlacesCreateList(generics.ListCreateAPIView):
@@ -318,12 +333,12 @@ class TicketView(APIView):
     def post(self, request):
         serializer = TicketSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        parsed_data = serializer.data
+        parsed_data = serializer.validated_data
         ticket_verified = parsed_data.get('ticket_verified')
         if ticket_verified == "True":
             error_message = "Билет уже использован."
             return Response({'Сообщение': error_message, 'data': parsed_data}, status=status.HTTP_400_BAD_REQUEST)
-        ticket_day = datetime.strptime(parsed_data.get('ticket_day'), "%Y-%m-%d").date()
+        ticket_day = parsed_data.get('ticket_day')
         ship_start_time = parsed_data.get('ship_start_time')
         current_datetime = datetime.now()
         current_date = current_datetime.date()

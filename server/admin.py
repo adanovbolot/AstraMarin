@@ -28,13 +28,13 @@ class PriceTypesAdmin(admin.ModelAdmin):
 
 @admin.register(Tickets)
 class TicketsAdmin(admin.ModelAdmin):
-    list_display = ['operator', 'ticket_verified', 'ticket_has_expired', 'bought', 'created_at', 'area', 'ship']
+    list_display = ['operator', 'ticket_verified', 'ticket_has_expired', 'bought', 'area', 'ship']
     fieldsets = (
         ("Оператор который продал билет", {'fields': ('operator',)}),
         ("Данные билета", {'fields': ('area', 'ship')}),
         ("Даты", {'fields': ('ticket_day', 'created_at')}),
         ("Стоимость", {'fields': ('price_types', 'adult_quantity', 'child_quantity', 'total_amount')}),
-        ("Чек, QR и данные о чеке", {'fields': ('check_qr_text', 'qr_code', 'description_check')}),
+        ("Чек, QR и данные о чеке", {'fields': ('check_qr_text',)}),
         ("Статусы", {'fields': ('ticket_verified', 'ticket_has_expired', 'bought')}),
     )
 
@@ -46,10 +46,10 @@ class LandingPlacesAdmin(admin.ModelAdmin):
 
 @admin.register(PointsSale)
 class PointsSaleAdmin(admin.ModelAdmin):
-    list_display = ['id', 'operator', 'created_at', 'left_at', 'complete_the_work_day', 'status']
+    list_display = ['id', 'operator', 'create_data', 'left_at', 'complete_the_work_day', 'status']
     fieldsets = (
         ("Данные о точка продажи", {'fields': ('operator',)}),
-        ("Даты", {'fields': ('left_at',)}),
+        ("Даты", {'fields': ('left_at', 'create_data')}),
         ("Статусы", {'fields': ('complete_the_work_day', 'status')}),
     )
 

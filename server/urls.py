@@ -35,4 +35,5 @@ urlpatterns = [
     path('ship/schedule/update/delete/<int:pk>/', views.ShipScheduleUpdateDelete.as_view()),
 
     path('tickets/verification/', views.TicketView.as_view()),
+
 ]
