@@ -53,12 +53,19 @@ class OperatorAuthorization(APIView):
             operator = request.user
             current_date = timezone.now().date()
             points_sale = PointsSale.objects.filter(
-                operator=operator, created_at__date=current_date, status='Открытая смена'
+                operator=operator, create_data=current_date, status='Открытая смена'
             ).first()
 
             if not points_sale:
                 points_sale = PointsSale.objects.create(operator=operator, status='Открытая смена')
-            return Response({'Сообщение': 'Вы успешно вошли в свой аккаунт!'},
+
+            user_data = {
+                'id': operator.id,
+                'username': operator.username,
+                'user_type': operator.user_type,
+            }
+
+            return Response({'Сообщение': 'Вы успешно вошли в свой аккаунт!', 'Пользователь': user_data},
                             status=status.HTTP_200_OK)
         else:
             return Response({'Сообщение': 'Неверный логин или пароль'},
