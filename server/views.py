@@ -1,14 +1,12 @@
 from datetime import datetime
-
-from django.db.models.functions import TruncDate
 from django.utils import timezone
-from .permissions import CreateUserPermission, IsSudovoditel, IsOperator
+from .filters import UserFilter
+from .permissions import CreateUserPermission, IsSudovoditel, IsOperator, AdminOnlyPermission
 from rest_framework import generics, permissions
 from django.contrib.auth import authenticate, login, logout
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
 from .models import (
     LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule
 )
@@ -21,15 +19,25 @@ from .serializers import (
 
 
 class OperatorsList(generics.ListAPIView):
-    queryset = User.objects.all()
     serializer_class = UserLoginSerializer
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [AdminOnlyPermission]
+    filterset_class = UserFilter
+
+    def get_queryset(self):
+        queryset = User.objects.exclude(is_superuser=True)
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        data = {'сообщение': 'Список сотрудников'}
+        response.data.append(data)
+        return response
 
 
 class OperatorsDetailUpdateDelete(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [AdminOnlyPermission]
     lookup_field = 'pk'
 
     def destroy(self, request, *args, **kwargs):
@@ -39,7 +47,18 @@ class OperatorsDetailUpdateDelete(generics.RetrieveUpdateDestroyAPIView):
 
     def partial_update(self, request, *args, **kwargs):
         kwargs['partial'] = True
-        return self.update(request, *args, **kwargs)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response({"Сообщение": "Оператор успешно обновлен."})
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response({"Сообщение": "Оператор успешно обновлен."})
 
 
 class OperatorAuthorization(APIView):
@@ -104,7 +123,7 @@ class OperatorChangePassword(APIView):
 
 
 class PriceCreateList(generics.ListCreateAPIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [AdminOnlyPermission]
     queryset = Price.objects.all()
     serializer_class = PriceSerializer
 
@@ -121,7 +140,7 @@ class PriceCreateList(generics.ListCreateAPIView):
 
 
 class PriceUpdateDelete(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [AdminOnlyPermission]
     queryset = Price.objects.all()
     serializer_class = PriceSerializer
 
@@ -141,32 +160,55 @@ class PriceUpdateDelete(generics.RetrieveUpdateDestroyAPIView):
 class PriceTypesCreate(generics.ListCreateAPIView):
     serializer_class = PriceTypesSerializer
     queryset = PriceTypes.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAdminUser]
 
     def create(self, request, *args, **kwargs):
+        if not request.user.is_authenticated or request.user.user_type != 'Администрация':
+            return Response({'ошибка': 'Доступ запрещен. Только администратор может создавать типы цен.'},
+                            status=status.HTTP_403_FORBIDDEN)
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        return Response({'Сообщение': 'Тип цены успешно создан.'}, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(
+            {'Сообщение': 'Тип цены успешно создан.'},
+            status=status.HTTP_201_CREATED, headers=headers
+        )
 
 
 class PriceTypesUpdateDelete(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PriceTypesSerializer
     queryset = PriceTypes.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAdminUser]
 
     def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        return Response({'Сообщение': 'Тип цены успешно обновлен.'}, status=status.HTTP_200_OK)
+        user = self.request.user
+        if user.is_authenticated and user.user_type == 'Администрация':
+            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return Response({'Сообщение': 'Тип цены успешно обновлен.'}, status=status.HTTP_200_OK)
+        else:
+            return Response(
+                {
+                    'ошибка': 'Доступ запрещен. Только пользователи с должностью'
+                              ' "Администрация" могут выполнять эту операцию.'},
+                    status=status.HTTP_403_FORBIDDEN)
 
     def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        return Response({'Сообщение': 'Тип цены успешно удален.'}, status=status.HTTP_204_NO_CONTENT)
+        user = self.request.user
+        if user.is_authenticated and user.user_type == 'Администрация':
+            instance = self.get_object()
+            self.perform_destroy(instance)
+            return Response({'Сообщение': 'Тип цены успешно удален.'}, status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response(
+                {
+                    'ошибка': 'Доступ запрещен. Только пользователи с должностью'
+                              ' "Администрация" могут выполнять эту операцию.'},
+                    status=status.HTTP_403_FORBIDDEN)
 
 
 class TicketsCreate(generics.CreateAPIView):
@@ -175,6 +217,10 @@ class TicketsCreate(generics.CreateAPIView):
     serializer_class = TicketsCreateSerializer
 
     def create(self, request, *args, **kwargs):
+        if not request.user.is_authenticated or request.user.user_type != 'Оператор':
+            return Response({'ошибка': 'Доступ запрещен. Только операторы могут создавать билеты.'},
+                            status=status.HTTP_403_FORBIDDEN)
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
@@ -195,7 +241,7 @@ class TicketsList(generics.ListAPIView):
 
 
 class LandingPlacesCreateList(generics.ListCreateAPIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [AdminOnlyPermission]
     serializer_class = LandingPlacesSerializer
     queryset = LandingPlaces.objects.all()
 
@@ -204,16 +250,18 @@ class LandingPlacesCreateList(generics.ListCreateAPIView):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        return Response({'Сообщение': 'Место посадки успешно создано.'}, status=status.HTTP_201_CREATED, headers=headers)
+        return Response({'Сообщение': 'Место посадки успешно создано.'},
+                        status=status.HTTP_201_CREATED, headers=headers)
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(queryset, many=True)
-        return Response({'Сообщение': 'Список мест посадки получен успешно.', 'data': serializer.data}, status=status.HTTP_200_OK)
+        return Response({'Сообщение': 'Список мест посадки получен успешно.', 'data': serializer.data},
+                        status=status.HTTP_200_OK)
 
 
 class LandingPlacesUpdateDelete(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [AdminOnlyPermission]
     serializer_class = LandingPlacesSerializer
     queryset = LandingPlaces.objects.all()
 
@@ -246,7 +294,11 @@ class PointsSaleCreate(generics.CreateAPIView):
 class PointsSaleList(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PointsSaleSerializer
-    queryset = PointsSale.objects.all()
+
+    def get_queryset(self):
+        user = self.request.user
+        current_date = datetime.now().date()
+        return PointsSale.objects.filter(user=user, create_data=current_date)
 
 
 class PointsSaleUpdate(generics.UpdateAPIView):
@@ -275,13 +327,13 @@ class PointsSaleUpdate(generics.UpdateAPIView):
 class ShipAll(generics.ListAPIView):
     queryset = Ship.objects.all()
     serializer_class = ShipAllSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [AdminOnlyPermission]
 
 
 class ShipCreate(generics.CreateAPIView):
     queryset = Ship.objects.all()
     serializer_class = ShipAllSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [AdminOnlyPermission]
 
     def perform_create(self, serializer):
         serializer.save()
@@ -291,7 +343,7 @@ class ShipCreate(generics.CreateAPIView):
 class ShipUpdateDelete(generics.RetrieveUpdateDestroyAPIView):
     queryset = Ship.objects.all()
     serializer_class = ShipAllSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [AdminOnlyPermission]
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -308,7 +360,7 @@ class ShipUpdateDelete(generics.RetrieveUpdateDestroyAPIView):
 
 class ShipScheduleCreate(generics.CreateAPIView):
     queryset = ShipSchedule.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [AdminOnlyPermission]
     serializer_class = ShipScheduleSerializer
 
 
@@ -320,7 +372,7 @@ class ShipScheduleGetAll(generics.ListAPIView):
 
 class ShipScheduleUpdateDelete(generics.RetrieveUpdateDestroyAPIView):
     queryset = ShipSchedule.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [AdminOnlyPermission]
     serializer_class = ShipScheduleSerializer
 
     def update(self, request, *args, **kwargs):

@@ -11,11 +11,12 @@ from django.core.files import File
 import json
 
 
-
-@receiver(user_logged_out)
-def update_last_logout(sender, user, request, **kwargs):
-    user.last_logout = timezone.now()
-    user.save()
+# @receiver(user_logged_out)
+# def update_last_logout(sender, request, **kwargs):
+#     user = request.user
+#     if user.is_authenticated:
+#         user.last_logout = timezone.now()
+#         user.save()
 
 
 @receiver(m2m_changed, sender=Tickets.price_types.through)

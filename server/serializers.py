@@ -12,7 +12,10 @@ from .models import (
 class UserLoginSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('username', 'password')
+        fields = (
+            'id', 'username', 'full_name', 'inn', 'user_type',
+            'last_login', 'last_logout', 'date_of_registration'
+        )
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -62,7 +65,7 @@ class PriceTypesSerializer(serializers.ModelSerializer):
         client_type = data.get('client_type')
         existing_object = PriceTypes.objects.filter(client_type=client_type).exists()
         if existing_object:
-            raise serializers.ValidationError({'client_type': 'Тип цены с таким уже существует'})
+            raise serializers.ValidationError({'Сообщение': 'Тип цены с таким уже существует'})
         return data
 
 
@@ -98,6 +101,16 @@ class TicketsCreateSerializer(serializers.ModelSerializer):
             'operator', 'ship', 'area', 'price_types', 'ticket_day',
             'adult_quantity', 'child_quantity', 'bought'
         )
+
+    def validate(self, data):
+        adult_quantity = data.get('adult_quantity')
+        child_quantity = data.get('child_quantity')
+
+        if adult_quantity is not None and adult_quantity < 0:
+            raise serializers.ValidationError({'Сообщение': ["Количество взрослых не может быть отрицательным."]})
+        if child_quantity is not None and child_quantity < 0:
+            raise serializers.ValidationError({'Сообщение': ["Количество детей не может быть отрицательным."]})
+        return data
 
     def create(self, validated_data):
         user = self.context['request'].user
@@ -207,126 +220,3 @@ class TicketSerializer(serializers.Serializer):
             'adult_quantity': instance['adult_quantity'],
             'child_quantity': instance['child_quantity'],
         }
-
-# class TicketSerializer(serializers.Serializer):
-#     data = serializers.JSONField()
-#
-#     def to_representation(self, instance):
-#         data = instance.get('data', '')
-#
-#         id_match = re.search(r'id-(\d+)', data)
-#         operator_match = re.search(r'operator-(\w+)', data)
-#         ticket_day_match = re.search(r'ticket_day-(\d{4}-\d{2}-\d{2})', data)
-#         ship_vessel_match = re.search(r'ship-vessel-(\w+)', data)
-#         ship_start_time_match = re.search(r'ship-start_time(\d{2}:\d{2}:\d{2})', data)
-#         ship_end_time_match = re.search(r'ship-end_time-(\d{2}:\d{2}:\d{2})', data)
-#         total_amount_match = re.search(r'total_amount-(\d+\.\d{2})', data)
-#         area_match = re.search(r'area-(\w+)', data)
-#         ticket_verified_match = re.search(r'ticket_verified-(\w+)', data)
-#         created_at_match = re.search(r'created_at-(.+)', data)
-#         price_types_match = re.search(r'price_types-(.+)', data)
-#         bought_match = re.search(r'bought-(\w+)', data)
-#         ticket_has_expired_match = re.search(r'ticket_has_expired-(\w+)', data)
-#         receipt_key_generation_match = re.search(r'receipt_key_generation-(\w+)', data)
-#
-#         id_value = id_match.group(1) if id_match else None
-#         operator_value = operator_match.group(1) if operator_match else None
-#         ticket_day_value = ticket_day_match.group(1) if ticket_day_match else None
-#         ship_vessel_value = ship_vessel_match.group(1) if ship_vessel_match else None
-#         ship_start_time_value = ship_start_time_match.group(1) if ship_start_time_match else None
-#         ship_end_time_value = ship_end_time_match.group(1) if ship_end_time_match else None
-#         total_amount_value = total_amount_match.group(1) if total_amount_match else None
-#         area_value = area_match.group(1) if area_match else None
-#         created_at_value = created_at_match.group(1) if created_at_match else None
-#         price_types_value = price_types_match.group(1) if price_types_match else None
-#         bought_value = bought_match.group(1) if bought_match else None
-#         ticket_has_expired_value = ticket_has_expired_match.group(1) if ticket_has_expired_match else None
-#
-#         if created_at_value:
-#             created_at_parts = created_at_value.split(',')
-#             created_at_datetime = created_at_parts[0].strip()
-#             bought_value = None
-#             ticket_has_expired_value = None
-#
-#             for part in created_at_parts[1:]:
-#                 part = part.strip()
-#                 if part.startswith('bought-'):
-#                     bought_value = part[len('bought-'):]
-#                 elif part.startswith('ticket_has_expired-'):
-#                     ticket_has_expired_value = part[len('ticket_has_expired-'):]
-#
-#             return {
-#                 'id': id_value,
-#                 'operator': operator_value,
-#                 'ticket_day': ticket_day_value,
-#                 'ship_vessel': ship_vessel_value,
-#                 'ship_start_time': ship_start_time_value,
-#                 'ship_end_time': ship_end_time_value,
-#                 'total_amount': total_amount_value,
-#                 'area': area_value,
-#                 'created_at': created_at_datetime,
-#                 'price_types': price_types_value,
-#                 'bought': bought_value,
-#                 'ticket_has_expired': ticket_has_expired_value,
-#             }
-
-
-# class TicketSerializer(serializers.Serializer):
-#     data = serializers.CharField()
-#
-#     def to_internal_value(self, data):
-#         id_match = re.search(r'id-(\d+)', data)
-#         operator_match = re.search(r'operator-(\w+)', data)
-#         ticket_day_match = re.search(r'ticket_day-(\d{4}-\d{2}-\d{2})', data)
-#         ship_vessel_match = re.search(r'ship-vessel-(\w+)', data)
-#         ship_start_time_match = re.search(r'ship-start_time(\d{2}:\d{2}:\d{2})', data)
-#         ship_end_time_match = re.search(r'ship-end_time-(\d{2}:\d{2}:\d{2})', data)
-#         total_amount_match = re.search(r'total_amount-(\d+\.\d{2})', data)
-#         area_match = re.search(r'area-(\w+)', data)
-#         ticket_verified_match = re.search(r'ticket_verified-(\w+)', data)
-#         created_at_match = re.search(r'created_at-(.+)', data)
-#         price_types_match = re.search(r'price_types-(.+)', data)
-#         bought_match = re.search(r'bought-(\w+)', data)
-#         ticket_has_expired_match = re.search(r'ticket_has_expired-(\w+)', data)
-#         receipt_key_generation_match = re.search(r'receipt_key_generation-(\w+)', data)
-#
-#         id_value = id_match.group(1) if id_match else None
-#         operator_value = operator_match.group(1) if operator_match else None
-#         ticket_day_value = ticket_day_match.group(1) if ticket_day_match else None
-#         ship_vessel_value = ship_vessel_match.group(1) if ship_vessel_match else None
-#         ship_start_time_value = ship_start_time_match.group(1) if ship_start_time_match else None
-#         ship_end_time_value = ship_end_time_match.group(1) if ship_end_time_match else None
-#         total_amount_value = total_amount_match.group(1) if total_amount_match else None
-#         area_value = area_match.group(1) if area_match else None
-#         created_at_value = created_at_match.group(1) if created_at_match else None
-#         price_types_value = price_types_match.group(1) if price_types_match else None
-#         bought_value = bought_match.group(1) if bought_match else None
-#         ticket_has_expired_value = ticket_has_expired_match.group(1) if ticket_has_expired_match else None
-#
-#         if created_at_value:
-#             created_at_parts = created_at_value.split(',')
-#             created_at_datetime = created_at_parts[0].strip()
-#             bought_value = None
-#             ticket_has_expired_value = None
-#
-#             for part in created_at_parts[1:]:
-#                 part = part.strip()
-#                 if part.startswith('bought-'):
-#                     bought_value = part[len('bought-'):]
-#                 elif part.startswith('ticket_has_expired-'):
-#                     ticket_has_expired_value = part[len('ticket_has_expired-'):]
-#
-#             return {
-#                 'id': id_value,
-#                 'operator': operator_value,
-#                 'ticket_day': ticket_day_value,
-#                 'ship_vessel': ship_vessel_value,
-#                 'ship_start_time': ship_start_time_value,
-#                 'ship_end_time': ship_end_time_value,
-#                 'total_amount': total_amount_value,
-#                 'area': area_value,
-#                 'created_at': created_at_datetime,
-#                 'price_types': price_types_value,
-#                 'bought': bought_value,
-#                 'ticket_has_expired': ticket_has_expired_value,
-#             }

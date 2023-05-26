@@ -4,7 +4,7 @@ from . import views
 
 urlpatterns = [
     path('operator/list/', views.OperatorsList.as_view()),
-    path('operator/delete/<int:pk>/', views.OperatorsDetailUpdateDelete.as_view()),
+    path('operator/delete/update/<int:pk>/', views.OperatorsDetailUpdateDelete.as_view()),
     path('operator/create/', views.OperatorsCreate.as_view()),
     path('operator/authorization/', views.OperatorAuthorization.as_view()),
     path('operator/logout/', views.OperatorLogout.as_view()),

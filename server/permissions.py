@@ -1,8 +1,9 @@
 from django.utils import timezone
 from rest_framework.exceptions import PermissionDenied
 from rest_framework import permissions
-
 from server.models import PointsSale
+from rest_framework.exceptions import APIException
+from rest_framework import status
 
 
 class CreateUserPermission(permissions.BasePermission):
@@ -33,3 +34,12 @@ class IsOperator(permissions.BasePermission):
                 raise PermissionDenied('Невозможно создать билет. Смена не открыта.')
             return True
         raise PermissionDenied('Требуется авторизация оператора.')
+
+
+class AdminOnlyPermission(permissions.BasePermission):
+    message = 'Доступ запрещен. Доступно для Администрации.'
+
+    def has_permission(self, request, view):
+        if not request.user.is_authenticated or request.user.user_type != 'Администрация':
+            raise PermissionDenied(self.message)
+        return True

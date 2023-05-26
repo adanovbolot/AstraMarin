@@ -1,16 +1,11 @@
 from datetime import date
-
+from django.core.exceptions import ValidationError
 from django.contrib.auth import logout
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from server.element_select import USER_TYPE, CHILD_OR_ABULT, SHIFT_STATUS
 from server.manager import UserManager
 from django.utils import timezone
-from django.core.files.base import ContentFile
-from decimal import Decimal
-import qrcode
-from PIL import Image, ImageDraw, ImageFont
-from io import BytesIO
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -199,6 +194,10 @@ class Ship(models.Model):
         default=20
     )
 
+    def clean(self):
+        if self.restrictions == 0:
+            raise ValidationError({"Сообщение": 'Мест нет в данном судне.'})
+        
     def __str__(self):
         return f"{self.vessel_name}"
 
@@ -249,15 +248,6 @@ class LandingPlaces(models.Model):
         null=True
     )
 
-    @property
-    def can_use_currently_working(self):
-        return not self.currently_working
-
-    def get_currently_working_display(self):
-        if self.can_use_currently_working:
-            return self.currently_working
-        return 'Недоступно'
-
     def __str__(self):
         return f"{self.address}"
 
@@ -305,7 +295,11 @@ class PointsSale(models.Model):
             self.create_data = timezone.now().date()
         if self.complete_the_work_day:
             self.status = 'Архив'
-            logout(self.operator)
+            self.left_at = date.today()
+            user = User.objects.get(id=self.operator_id)
+            request = getattr(self, '_request', None)
+            if request:
+                logout(request)
         super().save(*args, **kwargs)
 
     def __str__(self):
