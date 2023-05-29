@@ -8,13 +8,13 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
 from .models import (
-    LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule
+    LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule, SalesReport
 )
 from .serializers import (
     UserSerializer, CreateUserSerializer, UserLoginSerializer, PriceSerializer, PriceTypesSerializer,
     TicketsCreateSerializer, TicketsListSerializer, LandingPlacesSerializer, PointsSaleCreateSerializer,
     PointsSaleSerializer, PointsSaleEndStatus, ShipAllSerializer, ShipScheduleSerializer, ShipScheduleGetAllSerializer,
-    TicketSerializer
+    TicketSerializer, SalesReportGETSerializer
 )
 
 
@@ -296,9 +296,20 @@ class PointsSaleList(generics.ListAPIView):
     serializer_class = PointsSaleSerializer
 
     def get_queryset(self):
-        user = self.request.user
-        current_date = datetime.now().date()
-        return PointsSale.objects.filter(user=user, create_data=current_date)
+        operator = self.request.user
+        queryset = PointsSale.objects.filter(operator_id=operator.id)
+
+        day = self.request.query_params.get('day')
+        month = self.request.query_params.get('month')
+        year = self.request.query_params.get('year')
+
+        if day:
+            queryset = queryset.filter(create_data__day=day)
+        if month:
+            queryset = queryset.filter(create_data__month=month)
+        if year:
+            queryset = queryset.filter(create_data__year=year)
+        return queryset
 
 
 class PointsSaleUpdate(generics.UpdateAPIView):
@@ -409,3 +420,20 @@ class TicketView(APIView):
         parsed_data['ticket_verified'] = True
         message = "Билет проверен и является действующим."
         return Response({'Сообщение': message, 'data': parsed_data}, status=status.HTTP_200_OK)
+
+
+class SalesReportListResultsDay(APIView):
+    serializer_class = SalesReportGETSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        queryset = SalesReport.objects.all()
+        filters = {
+            'date': request.query_params.get('date'),
+            'month': request.query_params.get('month'),
+            'year': request.query_params.get('year')
+        }
+        queryset = self.serializer_class().filter_reports(queryset, filters)
+        serializer = self.serializer_class(queryset, many=True, context={'request': request})
+        return Response(serializer.data)
+

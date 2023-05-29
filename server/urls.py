@@ -18,6 +18,7 @@ urlpatterns = [
 
     path('ticket/create/', views.TicketsCreate.as_view()),
     path('ticket/list/', views.TicketsList.as_view()),
+    path('tickets/verification/', views.TicketView.as_view()),
 
     path('landing/places/create/list/', views.LandingPlacesCreateList.as_view()),
     path('landing/places/update/delete/<int:pk>/', views.LandingPlacesUpdateDelete.as_view()),
@@ -34,6 +35,6 @@ urlpatterns = [
     path('ship/schedule/all/', views.ShipScheduleGetAll.as_view()),
     path('ship/schedule/update/delete/<int:pk>/', views.ShipScheduleUpdateDelete.as_view()),
 
-    path('tickets/verification/', views.TicketView.as_view()),
-
+    path('sales/report/list/results/day/', views.SalesReportListResultsDay.as_view())
 ]
+

@@ -1,10 +1,11 @@
-import re
+from django.db.models import Q, Max, Min
+from django.db.models import Sum
 from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from .models import (
-    LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule
+    LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule, SalesReport
 
 )
 
@@ -220,3 +221,51 @@ class TicketSerializer(serializers.Serializer):
             'adult_quantity': instance['adult_quantity'],
             'child_quantity': instance['child_quantity'],
         }
+
+
+class SalesReportGETSerializer(serializers.ModelSerializer):
+    operator = PointsSaleSerializer()
+
+    class Meta:
+        model = SalesReport
+        fields = "__all__"
+
+    def filter_reports(self, queryset, filters):
+        date = filters.get('date')
+        month = filters.get('month')
+        year = filters.get('year')
+        operator_id = filters.get('operator')
+        max_amount = filters.get('max_amount')
+        min_amount = filters.get('min_amount')
+
+        if operator_id:
+            queryset = queryset.filter(operator__id=operator_id)
+        if date:
+            queryset = queryset.filter(report_date=date)
+        elif month and year:
+            queryset = queryset.filter(report_date__month=month, report_date__year=year)
+        elif month:
+            queryset = queryset.filter(report_date__month=month)
+        elif year:
+            queryset = queryset.filter(report_date__year=year)
+        if max_amount:
+            queryset = queryset.annotate(max_amount=Max('total_amount_report')).order_by('max_amount')
+        if min_amount:
+            queryset = queryset.annotate(min_amount=Min('total_amount_report')).order_by('min_amount')
+        return queryset
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        month = self.context.get('request').query_params.get('month')
+        year = self.context.get('request').query_params.get('year')
+        if month and year:
+            total_monthly_sales = SalesReport.objects.filter(
+                Q(report_date__month=month, report_date__year=year) &
+                Q(operator=instance.operator)
+            ).aggregate(
+                total_adult_quantity=Sum('total_adult_quantity'),
+                total_child_quantity=Sum('total_child_quantity'),
+                total_amount_report=Sum('total_amount_report')
+            )
+            data['total_monthly_sales'] = total_monthly_sales
+        return data

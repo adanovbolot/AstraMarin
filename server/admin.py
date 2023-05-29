@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django import forms
 from .models import (
-    LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule, Berths
+    LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule, Berths, SalesReport, Terminal
 )
 
 
@@ -48,7 +48,7 @@ class LandingPlacesAdmin(admin.ModelAdmin):
 class PointsSaleAdmin(admin.ModelAdmin):
     list_display = ['id', 'operator', 'create_data', 'left_at', 'complete_the_work_day', 'status']
     fieldsets = (
-        ("Данные о точка продажи", {'fields': ('operator',)}),
+        ("Данные о точка продажи", {'fields': ('operator', 'landing_places')}),
         ("Даты", {'fields': ('left_at', 'create_data')}),
         ("Статусы", {'fields': ('complete_the_work_day', 'status')}),
     )
@@ -85,3 +85,12 @@ class BerthsAdmin(admin.ModelAdmin):
     list_display = ['id', 'berths']
     form = BerthsForm
 
+
+@admin.register(SalesReport)
+class SalesReportAdmin(admin.ModelAdmin):
+    list_display = ['id', 'operator', 'report_date', 'sales_date', 'total_amount_report']
+
+
+@admin.register(Terminal)
+class TerminalAdmin(admin.ModelAdmin):
+    list_display = ['id', 'token_name', 'token_terminal']

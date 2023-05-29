@@ -10,8 +10,8 @@ from django.utils import timezone
 
 class User(AbstractBaseUser, PermissionsMixin):
     class Meta:
-        verbose_name = 'Оператор'
-        verbose_name_plural = 'Операторы'
+        verbose_name = 'Сотрудник'
+        verbose_name_plural = 'Сотрудники'
 
     username = models.CharField(max_length=255, unique=True, verbose_name='Логин')
     full_name = models.CharField(max_length=255, blank=True, null=True, verbose_name='Фамилия')
@@ -102,7 +102,8 @@ class Tickets(models.Model):
     operator = models.ForeignKey(
         'PointsSale',
         on_delete=models.PROTECT,
-        verbose_name='Оператор'
+        verbose_name='Оператор',
+        related_name='tickets_points_sale'
     )
     ticket_day = models.DateField(
         verbose_name='День билета'
@@ -306,36 +307,66 @@ class PointsSale(models.Model):
         return f"{self.operator}"
 
 
-class SalesСollection(models.Model):
+class SalesReport(models.Model):
     class Meta:
-        verbose_name = 'Сбор продаж'
-        verbose_name_plural = 'Сбор продаж'
+        verbose_name = 'Отчет о продажах'
+        verbose_name_plural = 'Отчеты о продажах'
 
     operator = models.ForeignKey(
         PointsSale,
+        on_delete=models.CASCADE,
         verbose_name='Оператор',
-        on_delete=models.PROTECT,
+        related_name='sales_reports'
     )
-    tickets = models.ManyToManyField(
-        Tickets,
-        verbose_name='Билеты',
+    report_date = models.DateField(
+        verbose_name='Дата отчета',
+        blank=True,
+        null=True
     )
     sales_date = models.DateField(
         verbose_name='Дата продаж',
-        auto_now_add=True
+        auto_now_add=True,
+        blank=True,
+        null=True
     )
     total_adult_quantity = models.PositiveIntegerField(
-        verbose_name='Общее количество взрослых'
+        verbose_name='Общее количество взрослых',
+        blank=True,
+        null=True,
+        default=0
     )
     total_child_quantity = models.PositiveIntegerField(
-        verbose_name='Общее количество детей'
+        verbose_name='Общее количество детей',
+        blank=True,
+        null=True,
+        default=0
     )
-    total_amount = models.DecimalField(
-        verbose_name='Общая сумма',
+    total_amount_report = models.DecimalField(
+        verbose_name='Общая сумма продаж',
         decimal_places=2,
         max_digits=12,
         default=0,
+        blank=True,
+        null=True
     )
 
     def __str__(self):
-        return f"{self.operator}"
+        return f"{self.operator} -- {self.report_date}"
+
+
+class Terminal(models.Model):
+    class Meta:
+        verbose_name = 'Терминал'
+        verbose_name_plural = 'Терминалы'
+
+    token_name = models.PositiveIntegerField(
+        verbose_name='Номер токена',
+    )
+    token_terminal = models.CharField(
+        verbose_name='Токен терминала',
+        max_length=250
+    )
+
+    def __str__(self):
+        return f"{self.token_name}"
+
