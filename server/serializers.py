@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from .models import (
-    LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule, SalesReport
+    LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule, SalesReport, Terminal
 
 )
 
@@ -269,3 +269,11 @@ class SalesReportGETSerializer(serializers.ModelSerializer):
             )
             data['total_monthly_sales'] = total_monthly_sales
         return data
+
+
+class TerminalSerializer(serializers.ModelSerializer):
+    token_name = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Terminal
+        fields = ('id', 'token_name', 'token_terminal')

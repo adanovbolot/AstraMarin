@@ -361,6 +361,8 @@ class Terminal(models.Model):
 
     token_name = models.PositiveIntegerField(
         verbose_name='Номер токена',
+        blank=True,
+        null=True
     )
     token_terminal = models.CharField(
         verbose_name='Токен терминала',

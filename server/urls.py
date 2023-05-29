@@ -35,6 +35,8 @@ urlpatterns = [
     path('ship/schedule/all/', views.ShipScheduleGetAll.as_view()),
     path('ship/schedule/update/delete/<int:pk>/', views.ShipScheduleUpdateDelete.as_view()),
 
-    path('sales/report/list/results/day/', views.SalesReportListResultsDay.as_view())
+    path('sales/report/list/results/day/', views.SalesReportListResultsDay.as_view()),
+
+    path('terminal/list/create/', views.TerminalListCreateView.as_view()),
 ]
 

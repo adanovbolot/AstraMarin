@@ -129,3 +129,17 @@ REST_FRAMEWORK = {
 CRONJOBS = [
     ('0 0 * * *', 'server.cron.logout_users')
 ]
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+}

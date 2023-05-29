@@ -6,16 +6,19 @@ from rest_framework import generics, permissions
 from django.contrib.auth import authenticate, login, logout
 from rest_framework.views import APIView
 from rest_framework import status
+import logging
 from rest_framework.response import Response
 from .models import (
-    LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule, SalesReport
+    LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule, SalesReport, Terminal
 )
 from .serializers import (
     UserSerializer, CreateUserSerializer, UserLoginSerializer, PriceSerializer, PriceTypesSerializer,
     TicketsCreateSerializer, TicketsListSerializer, LandingPlacesSerializer, PointsSaleCreateSerializer,
     PointsSaleSerializer, PointsSaleEndStatus, ShipAllSerializer, ShipScheduleSerializer, ShipScheduleGetAllSerializer,
-    TicketSerializer, SalesReportGETSerializer
+    TicketSerializer, SalesReportGETSerializer, TerminalSerializer
 )
+
+logger = logging.getLogger(__name__)
 
 
 class OperatorsList(generics.ListAPIView):
@@ -437,3 +440,21 @@ class SalesReportListResultsDay(APIView):
         serializer = self.serializer_class(queryset, many=True, context={'request': request})
         return Response(serializer.data)
 
+
+class TerminalListCreateView(generics.ListCreateAPIView):
+    queryset = Terminal.objects.all()
+    serializer_class = TerminalSerializer
+    permission_classes = [AdminOnlyPermission]
+
+    def perform_create(self, serializer):
+        token_terminal = self.request.data.get('token_terminal')
+        token_name = int(token_terminal) if token_terminal.isdigit() else 0
+        serializer.save(token_name=token_name)
+        response_data = {
+            'Сообщение': 'Токен успешно создан',
+            'token_name': token_name
+        }
+
+        logger.info('Получены данные для создания токена: %s', self.request.data)
+        logger.info('Токен успешно создан. Имя токена: %s', token_name)
+        return Response(response_data, status=201)
