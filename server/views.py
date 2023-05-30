@@ -449,7 +449,8 @@ class EvotorUsersCreate(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         token = self.request.data.get('token', 'toaWaep4chou7ahkoogiu9Iusaht9ima')
-        serializer.save(token=token)
+        userId = self.request.data.get('userId')
+        serializer.save(token=token, userId=userId)
         logger = logging.getLogger(__name__)
         logger.info(f"Token '{token}' сохранен в базе данных.")
         logger.info(f"Request data: {self.request.data}")
@@ -461,7 +462,8 @@ class EvotorUsersCreate(generics.ListCreateAPIView):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         response_data = {
-            'token': serializer.data['token']
+            'token': 'toaWaep4chou7ahkoogiu9Iusaht9ima',
+            'userId': serializer.data['userId']
         }
         logger = logging.getLogger(__name__)
         logger.info(f"Response data: {response_data}")
