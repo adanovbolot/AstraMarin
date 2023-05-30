@@ -272,6 +272,7 @@ class SalesReportGETSerializer(serializers.ModelSerializer):
 
 
 class TerminalSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Terminal
-        fields = ('userid', 'token')
+        fields = ('id', 'userid', 'token')

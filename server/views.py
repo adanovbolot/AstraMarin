@@ -447,15 +447,8 @@ class TerminalListCreateView(generics.ListCreateAPIView):
     queryset = Terminal.objects.all()
     serializer_class = TerminalSerializer
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        token = serializer.data['token']
-        response_data = {
-            'userId': serializer.data['userid'],
-            'token': token
-        }
-        logger.info('Новый терминал успешно создан. Полученный токен: %s', token)
-        return Response(response_data, status=201, headers=headers)
+    def perform_create(self, serializer):
+        token = self.request.data.get('token')
+        serializer.save(token=token)
+        logger = logging.getLogger(__name__)
+        logger.info(f"Token '{token}' сохранен в базу данных.")

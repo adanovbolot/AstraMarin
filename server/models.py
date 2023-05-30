@@ -369,6 +369,8 @@ class Terminal(models.Model):
     token = models.CharField(
         verbose_name='Токен терминала',
         max_length=250,
+        blank=True,
+        null=True
     )
 
     def __str__(self):

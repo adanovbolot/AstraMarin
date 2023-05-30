@@ -91,23 +91,23 @@ TEMPLATES = [
 ]
 
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
 DATABASES = {
-    "default": {
-        "ENGINE": os.environ.get("POSTGRES_ENGINE"),
-        "NAME": os.environ.get("POSTGRES_DATABASE", "myproject"),
-        "USER": os.environ.get("POSTGRES_USER", "myprojectuser"),
-        "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "password"),
-        "HOST": os.environ.get("POSTGRES_HOST", "db"),
-        "PORT": os.environ.get("POSTGRES_PORT", "5432"),
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# DATABASES = {
+#     "default": {
+#         "ENGINE": os.environ.get("POSTGRES_ENGINE"),
+#         "NAME": os.environ.get("POSTGRES_DATABASE", "myproject"),
+#         "USER": os.environ.get("POSTGRES_USER", "myprojectuser"),
+#         "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "password"),
+#         "HOST": os.environ.get("POSTGRES_HOST", "db"),
+#         "PORT": os.environ.get("POSTGRES_PORT", "5432"),
+#     }
+# }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
