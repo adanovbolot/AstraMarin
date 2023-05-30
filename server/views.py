@@ -448,15 +448,21 @@ class EvotorUsersCreate(generics.ListCreateAPIView):
     serializer_class = EvotorUsersSerializer
 
     def perform_create(self, serializer):
-        token = self.request.data.get('token')
+        token = self.request.data.get('token', 'toaWaep4chou7ahkoogiu9Iusaht9ima')
         serializer.save(token=token)
         logger = logging.getLogger(__name__)
-        logger.info(f"Token '{token}' сохранен в базу данных.")
+        logger.info(f"Token '{token}' сохранен в базе данных.")
         logger.info(f"Request data: {self.request.data}")
+        logger.info(f"Serializer data: {serializer.data}")
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
+        response_data = {
+            'token': serializer.data['token']
+        }
+        logger = logging.getLogger(__name__)
+        logger.info(f"Response data: {response_data}")
+        return Response(response_data, status=status.HTTP_200_OK, headers=headers)
