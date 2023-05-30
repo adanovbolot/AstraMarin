@@ -4,10 +4,14 @@ from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
+import logging
 from .models import (
     LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule, SalesReport, EvotorUsers
 
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 class UserLoginSerializer(serializers.ModelSerializer):
@@ -272,7 +276,17 @@ class SalesReportGETSerializer(serializers.ModelSerializer):
 
 
 class EvotorUsersSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = EvotorUsers
         fields = ('id', 'userId', 'token')
+
+    def validate(self, data):
+        userId = data.get('userId')
+        token = data.get('token')
+        if EvotorUsers.objects.filter(userId=userId).exists():
+            logger.warning(f"Пользователь с идентификатором '{userId}' уже существует.")
+            raise serializers.ValidationError({'ошибка': 'Пользователь с таким идентификатором уже существует.'})
+        if EvotorUsers.objects.filter(token=token).exists():
+            logger.warning(f"Пользователь с токеном '{token}' уже существует.")
+            raise serializers.ValidationError({'ошибка': 'Пользователь с таким токеном уже существует.'})
+        return data

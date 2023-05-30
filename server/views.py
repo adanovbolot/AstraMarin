@@ -19,6 +19,7 @@ from .serializers import (
     PointsSaleSerializer, PointsSaleEndStatus, ShipAllSerializer, ShipScheduleSerializer, ShipScheduleGetAllSerializer,
     TicketSerializer, SalesReportGETSerializer, EvotorUsersSerializer
 )
+from .utils import generate_token
 
 logger = logging.getLogger(__name__)
 
@@ -474,17 +475,17 @@ class EvotorUsersDelete(APIView):
     def post(self, request):
         if request.data.get('type') != 'ApplicationUninstalled':
             return Response({'ошибка': 'Неверный тип запроса'}, status=status.HTTP_400_BAD_REQUEST)
-
         userId = request.data.get('data', {}).get('userId')
-
         if not userId:
-            return Response({'ошибка': 'Отсутствует идентификатор пользователя (userId)'}, status=status.HTTP_400_BAD_REQUEST)
-
+            return Response({'ошибка': 'Отсутствует идентификатор пользователя (userId)'},
+                            status=status.HTTP_400_BAD_REQUEST)
         try:
             user = EvotorUsers.objects.get(userId=userId)
+            token = generate_token()
+            user.token = token
             user.delete()
             logger.info(f"Объект с userId '{userId}' удален.")
-            return Response({'сообщение': 'Объект удален'}, status=status.HTTP_200_OK)
+            return Response({'сообщение': 'Объект удален', 'token': token}, status=status.HTTP_200_OK)
         except EvotorUsers.DoesNotExist:
             logger.info(f"Объект с userId '{userId}' не найден.")
             return Response({'ошибка': 'Объект не найден'}, status=status.HTTP_404_NOT_FOUND)
