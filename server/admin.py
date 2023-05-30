@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django import forms
 from .models import (
-    LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule, Berths, SalesReport, Terminal
+    LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule, Berths, SalesReport, EvotorUsers
 )
 
 
@@ -91,6 +91,6 @@ class SalesReportAdmin(admin.ModelAdmin):
     list_display = ['id', 'operator', 'report_date', 'sales_date', 'total_amount_report']
 
 
-@admin.register(Terminal)
+@admin.register(EvotorUsers)
 class TerminalAdmin(admin.ModelAdmin):
     list_display = ['id', 'userid', 'token']

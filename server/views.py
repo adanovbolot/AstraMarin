@@ -11,13 +11,13 @@ from rest_framework import status
 import logging
 from rest_framework.response import Response
 from .models import (
-    LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule, SalesReport, Terminal
+    LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule, SalesReport, EvotorUsers
 )
 from .serializers import (
     UserSerializer, CreateUserSerializer, UserLoginSerializer, PriceSerializer, PriceTypesSerializer,
     TicketsCreateSerializer, TicketsListSerializer, LandingPlacesSerializer, PointsSaleCreateSerializer,
     PointsSaleSerializer, PointsSaleEndStatus, ShipAllSerializer, ShipScheduleSerializer, ShipScheduleGetAllSerializer,
-    TicketSerializer, SalesReportGETSerializer, TerminalSerializer
+    TicketSerializer, SalesReportGETSerializer, EvotorUsersSerializer
 )
 
 logger = logging.getLogger(__name__)
@@ -443,12 +443,19 @@ class SalesReportListResultsDay(APIView):
         return Response(serializer.data)
 
 
-class TerminalListCreateView(generics.ListCreateAPIView):
-    queryset = Terminal.objects.all()
-    serializer_class = TerminalSerializer
+class EvotorUsersCreate(generics.ListCreateAPIView):
+    queryset = EvotorUsers.objects.all()
+    serializer_class = EvotorUsersSerializer
 
     def perform_create(self, serializer):
         token = self.request.data.get('token')
         serializer.save(token=token)
         logger = logging.getLogger(__name__)
         logger.info(f"Token '{token}' сохранен в базу данных.")
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)

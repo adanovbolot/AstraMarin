@@ -38,6 +38,6 @@ urlpatterns = [
     path('sales/report/list/results/day/', views.SalesReportListResultsDay.as_view()),
 
 
-    path('api/v1/user/token/', views.TerminalListCreateView.as_view()),
+    path('api/v1/user/create/', views.EvotorUsersCreate.as_view()),
 ]
 

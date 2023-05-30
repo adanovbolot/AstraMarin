@@ -356,18 +356,17 @@ class SalesReport(models.Model):
         return f"{self.operator} -- {self.report_date}"
 
 
-class Terminal(models.Model):
+class EvotorUsers(models.Model):
     class Meta:
-        verbose_name = 'Терминал'
-        verbose_name_plural = 'Терминалы'
+        verbose_name = 'Пользователи Эвотор'
+        verbose_name_plural = 'Пользователи Эвотор'
 
-    userid = models.ForeignKey(
-        User,
-        verbose_name='ID',
-        on_delete=models.PROTECT
+    userid = models.CharField(
+        verbose_name='UserID',
+        max_length=100,
     )
     token = models.CharField(
-        verbose_name='Токен терминала',
+        verbose_name='Токен',
         max_length=250,
         blank=True,
         null=True

@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from .models import (
-    LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule, SalesReport, Terminal
+    LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule, SalesReport, EvotorUsers
 
 )
 
@@ -271,8 +271,8 @@ class SalesReportGETSerializer(serializers.ModelSerializer):
         return data
 
 
-class TerminalSerializer(serializers.ModelSerializer):
+class EvotorUsersSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = Terminal
+        model = EvotorUsers
         fields = ('id', 'userid', 'token')
