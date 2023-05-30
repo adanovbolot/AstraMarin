@@ -39,5 +39,6 @@ urlpatterns = [
 
 
     path('api/v1/user/create/', views.EvotorUsersCreate.as_view()),
+    path('/installation/event/', views.EvotorUsersDelete.as_view()),
 ]
 

@@ -468,3 +468,26 @@ class EvotorUsersCreate(generics.ListCreateAPIView):
         logger = logging.getLogger(__name__)
         logger.info(f"Response data: {response_data}")
         return Response(response_data, status=status.HTTP_200_OK, headers=headers)
+
+
+class EvotorUsersDelete(APIView):
+    def post(self, request):
+        if request.data.get('type') != 'ApplicationUninstalled':
+            return Response({'ошибка': 'Неверный тип запроса'}, status=status.HTTP_400_BAD_REQUEST)
+
+        userId = request.data.get('data', {}).get('userId')
+
+        if not userId:
+            return Response({'ошибка': 'Отсутствует идентификатор пользователя (userId)'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = EvotorUsers.objects.get(userId=userId)
+            user.delete()
+            logger.info(f"Объект с userId '{userId}' удален.")
+            return Response({'сообщение': 'Объект удален'}, status=status.HTTP_200_OK)
+        except EvotorUsers.DoesNotExist:
+            logger.info(f"Объект с userId '{userId}' не найден.")
+            return Response({'ошибка': 'Объект не найден'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Ошибка при удалении объекта: {str(e)}")
+            return Response({'ошибка': 'Внутренняя ошибка сервера'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
