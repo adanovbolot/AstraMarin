@@ -275,4 +275,4 @@ class EvotorUsersSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EvotorUsers
-        fields = ('id', 'userid', 'token')
+        fields = ('id', 'userId', 'token')

@@ -361,7 +361,7 @@ class EvotorUsers(models.Model):
         verbose_name = 'Пользователи Эвотор'
         verbose_name_plural = 'Пользователи Эвотор'
 
-    userid = models.CharField(
+    userId = models.CharField(
         verbose_name='UserID',
         max_length=100,
     )

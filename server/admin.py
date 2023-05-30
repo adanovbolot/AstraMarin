@@ -93,4 +93,4 @@ class SalesReportAdmin(admin.ModelAdmin):
 
 @admin.register(EvotorUsers)
 class TerminalAdmin(admin.ModelAdmin):
-    list_display = ['id', 'userid', 'token']
+    list_display = ['id', 'userId', 'token']
