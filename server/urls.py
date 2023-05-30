@@ -37,6 +37,7 @@ urlpatterns = [
 
     path('sales/report/list/results/day/', views.SalesReportListResultsDay.as_view()),
 
-    path('terminal/list/create/', views.TerminalListCreateView.as_view()),
+
+    path('api/v1/user/token/', views.TerminalListCreateView.as_view()),
 ]
 

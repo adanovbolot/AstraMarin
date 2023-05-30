@@ -8,7 +8,7 @@ from .models import (
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ('id', 'username', 'inn', 'user_type', 'date_of_registration')
+    list_display = ('username', 'inn', 'user_type', 'date_of_registration')
     fieldsets = (
         ("Данные оператора", {'fields': ('username', 'full_name', 'inn', 'user_type')}),
         ("Даты", {'fields': ('last_login', 'last_logout')}),
@@ -93,4 +93,4 @@ class SalesReportAdmin(admin.ModelAdmin):
 
 @admin.register(Terminal)
 class TerminalAdmin(admin.ModelAdmin):
-    list_display = ['id', 'token_name', 'token_terminal']
+    list_display = ['id', 'userid', 'token']

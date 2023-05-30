@@ -6,6 +6,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from server.element_select import USER_TYPE, CHILD_OR_ABULT, SHIFT_STATUS
 from server.manager import UserManager
 from django.utils import timezone
+import uuid
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -13,6 +14,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name = 'Сотрудник'
         verbose_name_plural = 'Сотрудники'
 
+    userid = models.UUIDField(primary_key=True, default=uuid.uuid4)
     username = models.CharField(max_length=255, unique=True, verbose_name='Логин')
     full_name = models.CharField(max_length=255, blank=True, null=True, verbose_name='Фамилия')
     inn = models.CharField(max_length=12, blank=True, null=True, unique=True, verbose_name='ИИН')
@@ -359,16 +361,16 @@ class Terminal(models.Model):
         verbose_name = 'Терминал'
         verbose_name_plural = 'Терминалы'
 
-    token_name = models.PositiveIntegerField(
-        verbose_name='Номер токена',
-        blank=True,
-        null=True
+    userid = models.ForeignKey(
+        User,
+        verbose_name='ID',
+        on_delete=models.PROTECT
     )
-    token_terminal = models.CharField(
+    token = models.CharField(
         verbose_name='Токен терминала',
-        max_length=250
+        max_length=250,
     )
 
     def __str__(self):
-        return f"{self.token_name}"
+        return f"{self.userid}"
 

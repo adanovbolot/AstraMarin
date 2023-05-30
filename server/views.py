@@ -1,4 +1,6 @@
 from datetime import datetime
+
+import requests
 from django.utils import timezone
 from .filters import UserFilter
 from .permissions import CreateUserPermission, IsSudovoditel, IsOperator, AdminOnlyPermission
@@ -444,17 +446,16 @@ class SalesReportListResultsDay(APIView):
 class TerminalListCreateView(generics.ListCreateAPIView):
     queryset = Terminal.objects.all()
     serializer_class = TerminalSerializer
-    permission_classes = [AdminOnlyPermission]
 
-    def perform_create(self, serializer):
-        token_terminal = self.request.data.get('token_terminal')
-        token_name = int(token_terminal) if token_terminal.isdigit() else 0
-        serializer.save(token_name=token_name)
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        token = serializer.data['token']
         response_data = {
-            'Сообщение': 'Токен успешно создан',
-            'token_name': token_name
+            'userId': serializer.data['userid'],
+            'token': token
         }
-
-        logger.info('Получены данные для создания токена: %s', self.request.data)
-        logger.info('Токен успешно создан. Имя токена: %s', token_name)
-        return Response(response_data, status=201)
+        logger.info('Новый терминал успешно создан. Полученный токен: %s', token)
+        return Response(response_data, status=201, headers=headers)
