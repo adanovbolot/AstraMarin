@@ -492,3 +492,23 @@ class EvotorUsersDelete(APIView):
         except Exception as e:
             logger.error(f"Ошибка при удалении объекта: {str(e)}")
             return Response({'ошибка': 'Внутренняя ошибка сервера'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class EvotorUsersAuth(APIView):
+    def post(self, request):
+        userId = request.data.get('userId')
+
+        if not userId:
+            return Response({'ошибка': 'Отсутствует идентификатор пользователя (userId)'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = EvotorUsers.objects.get(userId=userId)
+            token = user.token
+            logger.info(f"Авторизация пользователя с userId '{userId}' успешна.")
+            return Response({'userId': userId, 'token': token}, status=status.HTTP_200_OK)
+        except EvotorUsers.DoesNotExist:
+            logger.info(f"Пользователь с userId '{userId}' не найден.")
+            return Response({'ошибка': 'Пользователь не найден'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Ошибка при авторизации пользователя: {str(e)}")
+            return Response({'ошибка': 'Внутренняя ошибка сервера'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
