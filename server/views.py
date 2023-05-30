@@ -452,6 +452,7 @@ class EvotorUsersCreate(generics.ListCreateAPIView):
         serializer.save(token=token)
         logger = logging.getLogger(__name__)
         logger.info(f"Token '{token}' сохранен в базу данных.")
+        logger.info(f"Request data: {self.request.data}")
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
