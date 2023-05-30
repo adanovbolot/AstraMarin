@@ -373,5 +373,5 @@ class EvotorUsers(models.Model):
     )
 
     def __str__(self):
-        return f"{self.userid}"
+        return f"{self.userId}"
 
