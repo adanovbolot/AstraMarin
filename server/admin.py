@@ -35,7 +35,7 @@ class TicketsAdmin(admin.ModelAdmin):
         ("Даты", {'fields': ('ticket_day', 'created_at')}),
         ("Стоимость", {'fields': ('price_types', 'adult_quantity', 'child_quantity', 'total_amount')}),
         ("Чек, QR и данные о чеке", {'fields': ('check_qr_text',)}),
-        ("Статусы", {'fields': ('ticket_verified', 'ticket_has_expired', 'bought')}),
+        ("Статусы", {'fields': ('ticket_verified', 'ticket_has_expired', 'bought', 'ticket_return')}),
     )
 
 

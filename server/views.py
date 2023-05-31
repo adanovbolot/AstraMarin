@@ -512,3 +512,17 @@ class EvotorUsersAuth(APIView):
         except Exception as e:
             logger.error(f"Ошибка при авторизации пользователя: {str(e)}")
             return Response({'ошибка': 'Внутренняя ошибка сервера'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class EvotorGetToken(APIView):
+    def post(self, request, format=None):
+        serializer = EvotorUsersSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            logger.info('Пользователь успешно создан.')
+            return Response(status=status.HTTP_200_OK)
+        else:
+            errors = serializer.errors
+            for field, error in errors.items():
+                logger.warning(f'Ошибка валидации поля {field}: {error}')
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)

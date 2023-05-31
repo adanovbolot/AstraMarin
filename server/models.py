@@ -174,6 +174,10 @@ class Tickets(models.Model):
         default=False,
         verbose_name='Билет проверен'
     )
+    ticket_return = models.BooleanField(
+        verbose_name='Возрат билета',
+        default=False,
+    )
 
     def __str__(self):
         return f"{'Куплен' if self.bought else 'Не куплен'} --- {self.ship} --- {self.created_at}"
