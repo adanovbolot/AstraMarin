@@ -280,13 +280,13 @@ class EvotorUsersSerializer(serializers.ModelSerializer):
         model = EvotorUsers
         fields = ('id', 'userId', 'token')
 
-    def validate(self, data):
-        userId = data.get('userId')
-        token = data.get('token')
-        if EvotorUsers.objects.filter(userId=userId).exists():
-            logger.warning(f"Пользователь с идентификатором '{userId}' уже существует.")
-            raise serializers.ValidationError({'ошибка': 'Пользователь с таким идентификатором уже существует.'})
-        if EvotorUsers.objects.filter(token=token).exists():
-            logger.warning(f"Пользователь с токеном '{token}' уже существует.")
-            raise serializers.ValidationError({'ошибка': 'Пользователь с таким токеном уже существует.'})
-        return data
+    # def validate(self, data):
+    #     userId = data.get('userId')
+    #     token = data.get('token')
+    #     if EvotorUsers.objects.filter(userId=userId).exists():
+    #         logger.warning(f"Пользователь с идентификатором '{userId}' уже существует.")
+    #         raise serializers.ValidationError({'ошибка': 'Пользователь с таким идентификатором уже существует.'})
+    #     if EvotorUsers.objects.filter(token=token).exists():
+    #         logger.warning(f"Пользователь с токеном '{token}' уже существует.")
+    #         raise serializers.ValidationError({'ошибка': 'Пользователь с таким токеном уже существует.'})
+    #     return data

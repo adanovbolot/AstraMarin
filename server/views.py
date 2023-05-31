@@ -449,7 +449,7 @@ class EvotorUsersCreate(generics.ListCreateAPIView):
     serializer_class = EvotorUsersSerializer
 
     def perform_create(self, serializer):
-        token = self.request.data.get('token', 'toaWaep4chou7ahkoogiu9Iusaht9ima')
+        token = generate_token()
         userId = self.request.data.get('userId')
         serializer.save(token=token, userId=userId)
         logger = logging.getLogger(__name__)
@@ -463,7 +463,7 @@ class EvotorUsersCreate(generics.ListCreateAPIView):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         response_data = {
-            'token': 'toaWaep4chou7ahkoogiu9Iusaht9ima',
+            'token': serializer.data['token'],
             'userId': serializer.data['userId']
         }
         logger = logging.getLogger(__name__)
