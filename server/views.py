@@ -481,15 +481,16 @@ class EvotorUsersDelete(APIView):
             return Response({'ошибка': 'Отсутствует идентификатор пользователя (userId)'},
                             status=status.HTTP_400_BAD_REQUEST)
         try:
-            user = EvotorUsers.objects.get(userId=userId)
-            token = generate_token()
-            user.token = token
-            user.delete()
-            logger.info(f"Объект с userId '{userId}' удален.")
-            return Response({'сообщение': 'Объект удален', 'token': token}, status=status.HTTP_200_OK)
-        except EvotorUsers.DoesNotExist:
-            logger.info(f"Объект с userId '{userId}' не найден.")
-            return Response({'ошибка': 'Объект не найден'}, status=status.HTTP_404_NOT_FOUND)
+            user = EvotorUsers.objects.filter(userId=userId).first()
+            if user:
+                token = generate_token()
+                user.token = token
+                user.delete()
+                logger.info(f"Объект с userId '{userId}' удален.")
+                return Response({'сообщение': 'Объект удален', 'token': token}, status=status.HTTP_200_OK)
+            else:
+                logger.info(f"Объект с userId '{userId}' не найден.")
+                return Response({'ошибка': 'Объект не найден'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             logger.error(f"Ошибка при удалении объекта: {str(e)}")
             return Response({'ошибка': 'Внутренняя ошибка сервера'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -557,3 +558,25 @@ class EvotorTokenCreate(generics.CreateAPIView):
         serializer.save()
 
         logger.info('Токен сохранен в базе данных.')
+
+
+class EvotorTokenDelete(APIView):
+    def post(self, request):
+        if request.data.get('type') != 'ApplicationUninstalled':
+            return Response({'ошибка': 'Неверный тип запроса'}, status=status.HTTP_400_BAD_REQUEST)
+        userId = request.data.get('data', {}).get('userId')
+        if not userId:
+            return Response({'ошибка': 'Отсутствует идентификатор пользователя (userId)'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        try:
+            token = EvotorToken.objects.filter(userId=userId).first()
+            if token:
+                token.delete()
+                logger.info(f"Запись с userId '{userId}' удалена.")
+                return Response({'сообщение': 'Запись удалена'}, status=status.HTTP_200_OK)
+            else:
+                logger.info(f"Запись с userId '{userId}' не найдена.")
+                return Response({'ошибка': 'Запись не найдена'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Ошибка при удалении записи: {str(e)}")
+            return Response({'ошибка': 'Внутренняя ошибка сервера'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
