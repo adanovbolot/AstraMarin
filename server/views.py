@@ -537,7 +537,9 @@ class EvotorGetToken(APIView):
             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+
 class EvotorTokenCreate(generics.CreateAPIView):
+    queryset = EvotorUsers.objects.all()
     serializer_class = EvotorTokenSerializer
 
     def create(self, request, *args, **kwargs):
@@ -553,3 +555,5 @@ class EvotorTokenCreate(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save()
+
+        logger.info('Токен сохранен в базе данных.')
