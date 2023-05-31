@@ -368,14 +368,14 @@ class EvotorUsers(models.Model):
     userId = models.CharField(
         verbose_name='UserID',
         max_length=100,
-        unique=True
+        # unique=True
     )
     token = models.CharField(
         verbose_name='Токен',
         max_length=250,
         blank=True,
         null=True,
-        unique=True
+        # unique=True
     )
 
     def __str__(self):
