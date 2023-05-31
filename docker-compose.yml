@@ -18,7 +18,7 @@ services:
 #      - db
     environment:
       - X_FORWARDED_PROTO=https
-#
+
 #  db:
 #    image: postgres:12
 #    container_name: server_db
