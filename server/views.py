@@ -518,11 +518,20 @@ class EvotorGetToken(APIView):
     def post(self, request, format=None):
         serializer = EvotorUsersSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            logger.info('Пользователь успешно создан.')
-            return Response(status=status.HTTP_200_OK)
+            user = serializer.save()
+            logger.info('Пользователь успешно создан.',
+                        extra={'request': request, 'user_id': user.id, 'token': user.token})
+            response_data = {
+                'status': 'success',
+                'message': 'Пользователь успешно создан.',
+                'user_id': user.id,
+                'token': user.token,
+                'additional_data': 'Дополнительные данные'
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
         else:
             errors = serializer.errors
             for field, error in errors.items():
-                logger.warning(f'Ошибка валидации поля {field}: {error}')
+                logger.warning(f'Ошибка валидации поля {field}: {error}',
+                               extra={'request': request, 'validation_error': f'{field}: {error}'})
             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
