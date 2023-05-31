@@ -482,17 +482,20 @@ class EvotorUsersDelete(APIView):
                             status=status.HTTP_400_BAD_REQUEST)
         try:
             user = EvotorUsers.objects.filter(userId=userId).first()
+            token = EvotorToken.objects.filter(userId=userId).first()
             if user:
-                token = generate_token()
-                user.token = token
                 user.delete()
-                logger.info(f"Объект с userId '{userId}' удален.")
-                return Response({'сообщение': 'Объект удален', 'token': token}, status=status.HTTP_200_OK)
+                logger.info(f"Объект EvotorUsers с userId '{userId}' удален.")
+            if token:
+                token.delete()
+                logger.info(f"Объект EvotorToken с userId '{userId}' удален.")
+            if user or token:
+                return Response({'сообщение': 'Объекты удалены'}, status=status.HTTP_200_OK)
             else:
-                logger.info(f"Объект с userId '{userId}' не найден.")
-                return Response({'ошибка': 'Объект не найден'}, status=status.HTTP_404_NOT_FOUND)
+                logger.info(f"Объекты с userId '{userId}' не найдены.")
+                return Response({'ошибка': 'Объекты не найдены'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            logger.error(f"Ошибка при удалении объекта: {str(e)}")
+            logger.error(f"Ошибка при удалении объектов: {str(e)}")
             return Response({'ошибка': 'Внутренняя ошибка сервера'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

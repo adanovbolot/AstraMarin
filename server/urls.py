@@ -41,7 +41,5 @@ urlpatterns = [
     path('api/v1/user/create/', views.EvotorUsersCreate.as_view()),
     path('installation/event/', views.EvotorUsersDelete.as_view()),
     path('user/verify/', views.EvotorUsersAuth.as_view()),
-    path('api/v1/user/token/', views.EvotorTokenCreate.as_view()),
-    path('installation/event/token/', views.EvotorTokenDelete.as_view())
 ]
 
