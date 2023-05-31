@@ -11,7 +11,8 @@ from rest_framework import status
 import logging
 from rest_framework.response import Response
 from .models import (
-    LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule, SalesReport, EvotorUsers
+    LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule, SalesReport, EvotorUsers,
+    EvotorToken
 )
 from .serializers import (
     UserSerializer, CreateUserSerializer, UserLoginSerializer, PriceSerializer, PriceTypesSerializer,
@@ -537,9 +538,8 @@ class EvotorGetToken(APIView):
             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 class EvotorTokenCreate(generics.CreateAPIView):
-    queryset = EvotorUsers.objects.all()
+    queryset = EvotorToken.objects.all()
     serializer_class = EvotorTokenSerializer
 
     def create(self, request, *args, **kwargs):
