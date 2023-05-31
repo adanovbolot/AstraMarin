@@ -290,3 +290,9 @@ class EvotorUsersSerializer(serializers.ModelSerializer):
     #         logger.warning(f"Пользователь с токеном '{token}' уже существует.")
     #         raise serializers.ValidationError({'ошибка': 'Пользователь с таким токеном уже существует.'})
     #     return data
+
+
+class EvotorTokenSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EvotorUsers
+        fields = ('id', 'userId', 'token')

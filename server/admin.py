@@ -2,7 +2,8 @@ from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django import forms
 from .models import (
-    LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule, Berths, SalesReport, EvotorUsers
+    LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule, Berths, SalesReport, EvotorUsers,
+    EvotorToken
 )
 
 
@@ -93,4 +94,9 @@ class SalesReportAdmin(admin.ModelAdmin):
 
 @admin.register(EvotorUsers)
 class TerminalAdmin(admin.ModelAdmin):
+    list_display = ['id', 'userId', 'token']
+
+
+@admin.register(EvotorToken)
+class EvotorTokenAdmin(admin.ModelAdmin):
     list_display = ['id', 'userId', 'token']

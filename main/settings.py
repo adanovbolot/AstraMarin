@@ -151,6 +151,9 @@ LOGGING = {
         'level': 'INFO',
     },
 }
+
+
+
 #1
 # сделать логику для билета, клиент может вернут билет.
 # добавил поле ticket_return нужно в signals and serializer,

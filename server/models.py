@@ -381,3 +381,24 @@ class EvotorUsers(models.Model):
     def __str__(self):
         return f"{self.userId}"
 
+
+class EvotorToken(models.Model):
+    class Meta:
+        verbose_name = 'Эвотор токен'
+        verbose_name_plural = 'Эвотор токены'
+
+    userId = models.CharField(
+        verbose_name='UserID',
+        max_length=100,
+        # unique=True
+    )
+    token = models.CharField(
+        verbose_name='Токен',
+        max_length=250,
+        blank=True,
+        null=True,
+        # unique=True
+    )
+
+    def __str__(self):
+        return f"{self.userId}, {self.token}"

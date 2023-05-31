@@ -17,7 +17,7 @@ from .serializers import (
     UserSerializer, CreateUserSerializer, UserLoginSerializer, PriceSerializer, PriceTypesSerializer,
     TicketsCreateSerializer, TicketsListSerializer, LandingPlacesSerializer, PointsSaleCreateSerializer,
     PointsSaleSerializer, PointsSaleEndStatus, ShipAllSerializer, ShipScheduleSerializer, ShipScheduleGetAllSerializer,
-    TicketSerializer, SalesReportGETSerializer, EvotorUsersSerializer
+    TicketSerializer, SalesReportGETSerializer, EvotorUsersSerializer, EvotorTokenSerializer
 )
 from .utils import generate_token
 
@@ -516,7 +516,7 @@ class EvotorUsersAuth(APIView):
 
 class EvotorGetToken(APIView):
     def post(self, request, format=None):
-        serializer = EvotorUsersSerializer(data=request.data)
+        serializer = EvotorTokenSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             logger.info('Пользователь успешно создан.',
@@ -535,3 +535,21 @@ class EvotorGetToken(APIView):
                 logger.warning(f'Ошибка валидации поля {field}: {error}',
                                extra={'request': request, 'validation_error': f'{field}: {error}'})
             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class EvotorTokenCreate(generics.CreateAPIView):
+    serializer_class = EvotorTokenSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+
+        logger.info('Токен успешно создан.',
+                    extra={'request': request, 'token_data': serializer.data})
+
+        return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
+
+    def perform_create(self, serializer):
+        serializer.save()
