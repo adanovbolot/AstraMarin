@@ -6,7 +6,8 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404
 import logging
 from .models import (
-    LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule, SalesReport, EvotorUsers
+    LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule, SalesReport, EvotorUsers,
+    EvotorToken
 
 )
 
