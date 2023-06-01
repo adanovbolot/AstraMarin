@@ -68,10 +68,17 @@ class OperatorsDetailUpdateDelete(generics.RetrieveUpdateDestroyAPIView):
         return Response({"Сообщение": "Оператор успешно обновлен."})
 
 
+
 class OperatorAuthorization(APIView):
     def post(self, request):
         username = request.data.get('username')
         password = request.data.get('password')
+
+        logger.debug(f"Received request data: {request.data}")  # Логирование входящих данных
+
+        # Логирование полного заголовка запроса
+        logger.debug(f"Request headers: {request.headers}")
+
         user = authenticate(username=username, password=password)
         if user is not None and user.is_active:
             login(request, user)
@@ -93,12 +100,18 @@ class OperatorAuthorization(APIView):
                     'Токен': evotor_token.token
                 }
                 headers = request.META
+
+                logger.debug(f"Returning response data: {response_data}")  # Логирование исходящих данных
+
                 return Response(response_data, headers=headers, status=status.HTTP_200_OK)
             else:
                 response_data = {
                     'Сообщение': 'Токен не найден!',
                     'Пользователь': user_data
                 }
+
+                logger.debug(f"Returning response data: {response_data}")  # Логирование исходящих данных
+
                 return Response(response_data, status=status.HTTP_404_NOT_FOUND)
         else:
             return Response({'Сообщение': 'Неверный логин или пароль'}, status=status.HTTP_400_BAD_REQUEST)
@@ -589,3 +602,5 @@ class EvotorTokenDelete(APIView):
         except Exception as e:
             logger.error(f"Ошибка при удалении записи: {str(e)}")
             return Response({'ошибка': 'Внутренняя ошибка сервера'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
