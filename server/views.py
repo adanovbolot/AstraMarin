@@ -1,5 +1,6 @@
 from datetime import datetime
-from rest_framework.exceptions import AuthenticationFailed
+
+import requests
 from django.utils import timezone
 from .filters import UserFilter
 from .permissions import CreateUserPermission, IsSudovoditel, IsOperator, AdminOnlyPermission
@@ -71,10 +72,6 @@ class OperatorAuthorization(APIView):
     def post(self, request):
         username = request.data.get('username')
         password = request.data.get('password')
-        token = request.data.get('token')
-
-        logger.info(f'Получен запрос на вход с именем пользователя: {username} и токен: {token}')
-
         user = authenticate(username=username, password=password)
         if user is not None and user.is_active:
             login(request, user)
@@ -85,26 +82,26 @@ class OperatorAuthorization(APIView):
             ).first()
             if not points_sale:
                 points_sale = PointsSale.objects.create(operator=operator, status='Открытая смена')
-
-            evotor_user = EvotorUsers.objects.filter(token=token).first()
-            if evotor_user:
-                user_data = {
-                    'id': operator.id,
-                    'username': operator.username,
-                    'user_type': operator.user_type,
+            user_data = {
+                'username': operator.username,
+            }
+            evotor_token = EvotorToken.objects.filter(token=request.data.get('token')).first()
+            if evotor_token:
+                response_data = {
+                    'Сообщение': 'Вы успешно вошли в свой аккаунт!',
+                    'Пользователь': user_data,
+                    'Токен': evotor_token.token
                 }
-                response_data = {'Сообщение': 'Вы успешно вошли в свой аккаунт!', 'Пользователь': user_data}
-                headers = {'Custom-Header': 'Значение заголовка'}
-                logger.info(f'Successful login response: {response_data}')
-                return Response(response_data, status=status.HTTP_200_OK, headers=headers)
+                headers = request.META
+                return Response(response_data, headers=headers, status=status.HTTP_200_OK)
             else:
-                error_message = 'Неверный токен'
-                logger.warning(error_message)
-                raise AuthenticationFailed({'Сообщение': error_message})
+                response_data = {
+                    'Сообщение': 'Токен не найден!',
+                    'Пользователь': user_data
+                }
+                return Response(response_data, status=status.HTTP_404_NOT_FOUND)
         else:
-            error_message = 'Неверный логин или пароль'
-            logger.warning(error_message)
-            raise AuthenticationFailed(error_message)
+            return Response({'Сообщение': 'Неверный логин или пароль'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class OperatorsCreate(generics.CreateAPIView):
