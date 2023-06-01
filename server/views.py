@@ -101,7 +101,7 @@ class OperatorAuthorization(APIView):
                 }
                 headers = request.META
 
-                logger.debug(f"Returning response data: {response_data}")  # Логирование исходящих данных
+                logger.debug(f"Returning response data: {response_data}")
 
                 return Response(response_data, headers=headers, status=status.HTTP_200_OK)
             else:
@@ -110,7 +110,7 @@ class OperatorAuthorization(APIView):
                     'Пользователь': user_data
                 }
 
-                logger.debug(f"Returning response data: {response_data}")  # Логирование исходящих данных
+                logger.debug(f"Returning response data: {response_data}")
 
                 return Response(response_data, status=status.HTTP_404_NOT_FOUND)
         else:
