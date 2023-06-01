@@ -149,10 +149,9 @@ LOGGING = {
     },
     'root': {
         'handlers': ['console'],
-        'level': 'INFO',
+        'level': 'DEBUG',
     },
 }
-
 
 #1
 # сделать логику для билета, клиент может вернут билет.

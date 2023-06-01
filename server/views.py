@@ -68,7 +68,6 @@ class OperatorsDetailUpdateDelete(generics.RetrieveUpdateDestroyAPIView):
         return Response({"Сообщение": "Оператор успешно обновлен."})
 
 
-
 class OperatorAuthorization(APIView):
     def post(self, request):
         username = request.data.get('username')
