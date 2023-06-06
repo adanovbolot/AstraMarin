@@ -4,7 +4,7 @@ import requests
 from django.utils import timezone
 from .filters import UserFilter
 from .permissions import CreateUserPermission, IsSudovoditel, IsOperator, AdminOnlyPermission
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, mixins
 from django.contrib.auth import authenticate, login, logout
 from rest_framework.views import APIView
 from rest_framework import status
@@ -601,7 +601,7 @@ class EvotorTokenDelete(APIView):
             return Response({'ошибка': 'Внутренняя ошибка сервера'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class ShopsCreateOrUpdateView(generics.CreateAPIView, generics.UpdateAPIView):
+class ShopsCreateOrUpdateView(mixins.CreateModelMixin, mixins.UpdateModelMixin, generics.GenericAPIView):
     queryset = Shops.objects.all()
     serializer_class = ShopsSerializer
 
@@ -614,8 +614,21 @@ class ShopsCreateOrUpdateView(generics.CreateAPIView, generics.UpdateAPIView):
         logger.info(f'Обновлен объект Магазин: {instance}')
 
     def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        logger.info(f'Создан новый объект Магазин: {serializer.data}')
+        return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        if instance:
-            return self.update(request, *args, **kwargs)
-        else:
-            return self.create(request, *args, **kwargs)
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        logger.info(f'Обновлен объект Магазин: {serializer.data}')
+        return Response(serializer.data, status=status.HTTP_200_OK)
