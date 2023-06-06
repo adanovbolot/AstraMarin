@@ -601,7 +601,7 @@ class EvotorTokenDelete(APIView):
             return Response({'ошибка': 'Внутренняя ошибка сервера'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class ShopsCreateOrUpdateView(mixins.CreateModelMixin, mixins.UpdateModelMixin, generics.GenericAPIView):
+class ShopsCreateOrUpdateView(generics.ListCreateAPIView):
     queryset = Shops.objects.all()
     serializer_class = ShopsSerializer
 
@@ -609,34 +609,24 @@ class ShopsCreateOrUpdateView(mixins.CreateModelMixin, mixins.UpdateModelMixin, 
         instance = serializer.save()
         logger.info(f'Создан новый объект Магазин: {instance}')
 
-    def perform_update(self, serializer):
-        instance = serializer.save()
-        logger.info(f'Обновлен объект Магазин: {instance}')
-
-    def put(self, request, *args, **kwargs):
+    def create(self, request, *args, **kwargs):
         name = request.data.get('name')
         if name:
-            try:
-                instance = Shops.objects.get(name=name)
-                return self.update(request, *args, **kwargs)
-            except Shops.DoesNotExist:
-                pass
+            instance, created = Shops.objects.get_or_create(name=name)
+            if not created:
+                serializer = self.get_serializer(instance, data=request.data, partial=True)
+                serializer.is_valid(raise_exception=True)
+                self.perform_update(serializer)
+                logger.info(f'Обновлен объект Магазин: {instance}')
+                return Response(serializer.data, status=status.HTTP_200_OK)
 
-        return self.create(request, *args, **kwargs)
-
-    def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         logger.info(f'Создан новый объект Магазин: {serializer.data}')
-        return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        logger.info(f'Обновлен объект Магазин: {serializer.data}')
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        logger.info(f'Обновлен объект Магазин: {instance}')
