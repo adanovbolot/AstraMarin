@@ -630,3 +630,6 @@ class ShopsCreateOrUpdateView(generics.ListCreateAPIView):
     def perform_update(self, serializer):
         instance = serializer.save()
         logger.info(f'Обновлен объект Магазин: {instance}')
+
+    def put(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
