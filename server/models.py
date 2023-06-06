@@ -402,3 +402,24 @@ class EvotorToken(models.Model):
 
     def __str__(self):
         return f"{self.userId}, {self.token}"
+
+
+class Shops(models.Model):
+    uuid = models.CharField(
+        verbose_name='uuid',
+        max_length=200,
+    )
+    address = models.CharField(
+        verbose_name='Адрес',
+        max_length=200,
+    )
+    name = models.CharField(
+        verbose_name='Название',
+        max_length=200
+    )
+    code = models.CharField(
+        verbose_name='Код',
+        max_length=100,
+        blank=True,
+        null=True
+    )

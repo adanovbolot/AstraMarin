@@ -37,10 +37,12 @@ urlpatterns = [
 
     path('sales/report/list/results/day/', views.SalesReportListResultsDay.as_view()),
 
-
     path('api/v1/user/create/', views.EvotorUsersCreate.as_view()),
     path('installation/event/', views.EvotorUsersDelete.as_view()),
     path('user/verify/', views.EvotorUsersAuth.as_view()),
     path('api/v1/user/token/', views.EvotorTokenCreate.as_view()),
+
+    path('shops/create/', views.ShopsCreateView.as_view()),
+    path('shops/update/<int:pk>/', views.ShopsUpdateView.as_view()),
 ]
 
