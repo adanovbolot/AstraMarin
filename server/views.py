@@ -614,7 +614,15 @@ class ShopsCreateOrUpdateView(mixins.CreateModelMixin, mixins.UpdateModelMixin, 
         logger.info(f'Обновлен объект Магазин: {instance}')
 
     def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
+        name = request.data.get('name')
+        if name:
+            try:
+                instance = Shops.objects.get(name=name)
+                return self.update(request, *args, **kwargs)
+            except Shops.DoesNotExist:
+                pass
+
+        return self.create(request, *args, **kwargs)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
