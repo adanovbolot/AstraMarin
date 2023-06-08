@@ -463,3 +463,35 @@ class EvotorOperator(models.Model):
     def __str__(self):
         return f"{self.name} {self.stores}"
 
+
+class Terminal(models.Model):
+    class Meta:
+        verbose_name = 'Терминал'
+        verbose_name_plural = 'Терминалы'
+
+    uuid = models.CharField(
+        verbose_name='UUID',
+        max_length=200,
+        null=True,
+        blank=True
+    )
+    name = models.CharField(
+        verbose_name='Название',
+        max_length=200,
+        null=True,
+        blank=True
+    )
+    store_uuid = models.CharField(
+        verbose_name='UUID магазина',
+        max_length=200,
+        null=True,
+        blank=True
+    )
+    timezone_offset = models.IntegerField(
+        verbose_name='Смещение часового пояса',
+        null=True,
+        blank=True
+    )
+
+    def __str__(self):
+        return self.name

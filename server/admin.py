@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django import forms
 from .models import (
     LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule, Berths, SalesReport, EvotorUsers,
-    EvotorToken, Shops, EvotorOperator
+    EvotorToken, Shops, EvotorOperator, Terminal
 )
 
 
@@ -109,4 +109,9 @@ class ShopsAdmin(admin.ModelAdmin):
 
 @admin.register(EvotorOperator)
 class EvotorOperatorAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(Terminal)
+class TerminalAdmin(admin.ModelAdmin):
     pass

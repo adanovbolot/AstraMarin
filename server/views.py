@@ -12,14 +12,14 @@ import logging
 from rest_framework.response import Response
 from .models import (
     LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule, SalesReport, EvotorUsers,
-    EvotorToken, Shops, EvotorOperator
+    EvotorToken, Shops, EvotorOperator, Terminal
 )
 from .serializers import (
     UserSerializer, CreateUserSerializer, UserLoginSerializer, PriceSerializer, PriceTypesSerializer,
     TicketsCreateSerializer, TicketsListSerializer, LandingPlacesSerializer, PointsSaleCreateSerializer,
     PointsSaleSerializer, PointsSaleEndStatus, ShipAllSerializer, ShipScheduleSerializer, ShipScheduleGetAllSerializer,
     TicketSerializer, SalesReportGETSerializer, EvotorUsersSerializer, EvotorTokenSerializer, ShopsSerializer,
-    EvotorOperatorSerializer
+    EvotorOperatorSerializer, TerminalSerializer
 )
 from .utils import generate_token
 
@@ -702,3 +702,44 @@ class ShopsView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class TerminalView(APIView):
+    def get(self, request):
+        evotor_token = EvotorToken.objects.first()
+        if not evotor_token:
+            return Response('Токен не найден', status=status.HTTP_400_BAD_REQUEST)
+        token = evotor_token.token
+        url = 'https://api.evotor.ru/api/v1/inventories/devices/search'
+        headers = {
+            'X-Authorization': token
+        }
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            json_data = response.json()
+
+            terminals = []
+            for item in json_data:
+                uuid = item['uuid']
+                name = item['name']
+                store_uuid = item['storeUuid']
+                timezone_offset = item['timezoneOffset']
+
+                terminal, created = Terminal.objects.get_or_create(uuid=uuid)
+                terminal.name = name
+                terminal.store_uuid = store_uuid
+                terminal.timezone_offset = timezone_offset
+                terminal.save()
+                terminals.append(terminal)
+
+            serializer = TerminalSerializer(terminals, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request):
+        serializer = TerminalSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
