@@ -42,6 +42,7 @@ urlpatterns = [
     path('user/verify/', views.EvotorUsersAuth.as_view()),
     path('api/v1/user/token/', views.EvotorTokenCreate.as_view()),
     path('evotor/operators/', views.EvotorOperatorView.as_view()),
+
     path('shops/', views.ShopsCreateOrUpdateView.as_view()),
 
 ]

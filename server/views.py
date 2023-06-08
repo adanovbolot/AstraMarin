@@ -652,16 +652,21 @@ class EvotorOperatorView(APIView):
 
             for item in json_data:
                 uuid = item['uuid']
+                name = item['name']  # Получите значение поля 'name' из 'json_data'
+                code = item['code']  # Получите значение поля 'code' из 'json_data'
+                stores = item['stores'][0] if item['stores'] else None  # Получите значение поля 'stores' из 'json_data'
+                role = item['role']  # Получите значение поля 'role' из 'json_data'
+
                 evotor_operator, created = EvotorOperator.objects.get_or_create(uuid=uuid)
                 if not created:
-                    evotor_operator.name = item['name']
-                    evotor_operator.code = item['code']
-                    evotor_operator.stores = item['stores'][0] if item['stores'] else None
-                    evotor_operator.role = item['role']
+                    evotor_operator.name = name
+                    evotor_operator.code = code
+                    evotor_operator.stores = stores
+                    evotor_operator.role = role
+
                 evotor_operator.save()
 
             serializer = EvotorOperatorSerializer(EvotorOperator.objects.all(), many=True)
-            logger.info(serializer.data)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)

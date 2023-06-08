@@ -14,7 +14,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name = 'Сотрудник'
         verbose_name_plural = 'Сотрудники'
 
-    userid = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    # userid = models.UUIDField(primary_key=True, default=uuid.uuid4)
     username = models.CharField(max_length=255, unique=True, verbose_name='Логин')
     full_name = models.CharField(max_length=255, blank=True, null=True, verbose_name='Фамилия')
     inn = models.CharField(max_length=12, blank=True, null=True, unique=True, verbose_name='ИИН')

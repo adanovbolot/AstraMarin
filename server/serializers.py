@@ -296,7 +296,7 @@ class EvotorUsersSerializer(serializers.ModelSerializer):
 class EvotorTokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = EvotorToken
-        fields = ('id', 'userId', 'token')
+        fields = '__all__'
 
 
 class ShopsSerializer(serializers.ModelSerializer):
@@ -308,4 +308,4 @@ class ShopsSerializer(serializers.ModelSerializer):
 class EvotorOperatorSerializer(serializers.ModelSerializer):
     class Meta:
         model = EvotorOperator
-        fields = '__all__'
+        fields = ['uuid', 'name', 'code', 'stores', 'role']
