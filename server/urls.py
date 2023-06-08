@@ -44,6 +44,6 @@ urlpatterns = [
     path('evotor/operators/', views.EvotorOperatorView.as_view()),
 
     path('shops/', views.ShopsCreateOrUpdateView.as_view()),
-
+    path('shops/inventories/search/', views.ShopsView.as_view()),
 ]
 

@@ -670,3 +670,35 @@ class EvotorOperatorView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class ShopsView(APIView):
+    def get(self, request):
+        evotor_token = EvotorToken.objects.first()
+        if not evotor_token:
+            return Response('Токен не найден', status=status.HTTP_400_BAD_REQUEST)
+        token = evotor_token.token
+        url = 'https://api.evotor.ru/api/v1/inventories/stores/search'
+        headers = {
+            'X-Authorization': token
+        }
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            json_data = response.json()
+            for item in json_data:
+                uuid = item['uuid']
+                address = item['address']
+                name = item['name']
+                code = item['code']
+
+                shop, created = Shops.objects.get_or_create(uuid=uuid)
+                if not created:
+                    shop.address = address
+                    shop.name = name
+                    shop.code = code
+
+                shop.save()
+            serializer = ShopsSerializer(Shops.objects.all(), many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)

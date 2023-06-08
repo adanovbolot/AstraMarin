@@ -405,6 +405,10 @@ class EvotorToken(models.Model):
 
 
 class Shops(models.Model):
+    class Meta:
+        verbose_name = 'Адрес'
+        verbose_name_plural = 'Адреса'
+
     uuid = models.CharField(
         verbose_name='uuid',
         max_length=200,
@@ -423,6 +427,9 @@ class Shops(models.Model):
         blank=True,
         null=True
     )
+
+    def __str__(self):
+        return f"{self.name} {self.address}"
 
 
 class EvotorOperator(models.Model):
