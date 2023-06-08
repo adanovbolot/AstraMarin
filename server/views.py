@@ -12,13 +12,14 @@ import logging
 from rest_framework.response import Response
 from .models import (
     LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule, SalesReport, EvotorUsers,
-    EvotorToken, Shops
+    EvotorToken, Shops, EvotorOperator
 )
 from .serializers import (
     UserSerializer, CreateUserSerializer, UserLoginSerializer, PriceSerializer, PriceTypesSerializer,
     TicketsCreateSerializer, TicketsListSerializer, LandingPlacesSerializer, PointsSaleCreateSerializer,
     PointsSaleSerializer, PointsSaleEndStatus, ShipAllSerializer, ShipScheduleSerializer, ShipScheduleGetAllSerializer,
-    TicketSerializer, SalesReportGETSerializer, EvotorUsersSerializer, EvotorTokenSerializer, ShopsSerializer
+    TicketSerializer, SalesReportGETSerializer, EvotorUsersSerializer, EvotorTokenSerializer, ShopsSerializer,
+    EvotorOperatorSerializer
 )
 from .utils import generate_token
 
@@ -633,3 +634,34 @@ class ShopsCreateOrUpdateView(generics.ListCreateAPIView):
 
     def put(self, request, *args, **kwargs):
         return self.create(request, *args, **kwargs)
+
+
+class EvotorOperatorView(APIView):
+    def get(self, request):
+        evotor_token = EvotorToken.objects.first()
+        if not evotor_token:
+            return Response('Токен не найден', status=status.HTTP_400_BAD_REQUEST)
+        token = evotor_token.token
+        url = 'https://api.evotor.ru/api/v1/inventories/employees/search'
+        headers = {
+            'X-Authorization': token
+        }
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            json_data = response.json()
+
+            for item in json_data:
+                uuid = item['uuid']
+                evotor_operator, created = EvotorOperator.objects.get_or_create(uuid=uuid)
+                if not created:
+                    evotor_operator.name = item['name']
+                    evotor_operator.code = item['code']
+                    evotor_operator.stores = item['stores'][0] if item['stores'] else None
+                    evotor_operator.role = item['role']
+                evotor_operator.save()
+
+            serializer = EvotorOperatorSerializer(EvotorOperator.objects.all(), many=True)
+            logger.info(serializer.data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)

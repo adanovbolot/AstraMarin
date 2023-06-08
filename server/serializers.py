@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404
 import logging
 from .models import (
     LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule, SalesReport, EvotorUsers,
-    EvotorToken, Shops
+    EvotorToken, Shops, EvotorOperator
 
 )
 
@@ -302,4 +302,10 @@ class EvotorTokenSerializer(serializers.ModelSerializer):
 class ShopsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shops
+        fields = '__all__'
+
+
+class EvotorOperatorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EvotorOperator
         fields = '__all__'

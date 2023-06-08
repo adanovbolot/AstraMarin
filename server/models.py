@@ -423,3 +423,36 @@ class Shops(models.Model):
         blank=True,
         null=True
     )
+
+
+class EvotorOperator(models.Model):
+    class Meta:
+        verbose_name = 'Эвотор Оператор'
+        verbose_name_plural = 'Эвотор Операторы'
+
+    uuid = models.CharField(
+        verbose_name='uuid',
+        max_length=200,
+    )
+    name = models.CharField(
+        verbose_name='Название',
+        max_length=200
+    )
+    code = models.CharField(
+        verbose_name='Код',
+        max_length=100,
+        blank=True,
+        null=True
+    )
+    stores = models.CharField(
+        verbose_name='Магазин',
+        max_length=200,
+    )
+    role = models.CharField(
+        verbose_name='Роль',
+        max_length=100
+    )
+
+    def __str__(self):
+        return f"{self.name} {self.stores}"
+
