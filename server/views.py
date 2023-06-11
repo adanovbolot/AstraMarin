@@ -12,14 +12,14 @@ import logging
 from rest_framework.response import Response
 from .models import (
     LandingPlaces, PointsSale, PriceTypes, Price, Tickets, User, Ship, ShipSchedule, SalesReport, EvotorUsers,
-    EvotorToken, Shops, EvotorOperator, Terminal
+    EvotorToken, Shops, EvotorOperator, Terminal, Product
 )
 from .serializers import (
     UserSerializer, CreateUserSerializer, UserLoginSerializer, PriceSerializer, PriceTypesSerializer,
     TicketsCreateSerializer, TicketsListSerializer, LandingPlacesSerializer, PointsSaleCreateSerializer,
     PointsSaleSerializer, PointsSaleEndStatus, ShipAllSerializer, ShipScheduleSerializer, ShipScheduleGetAllSerializer,
     TicketSerializer, SalesReportGETSerializer, EvotorUsersSerializer, EvotorTokenSerializer, ShopsSerializer,
-    EvotorOperatorSerializer, TerminalSerializer
+    EvotorOperatorSerializer, TerminalSerializer, ProductSerializer
 )
 from .utils import generate_token
 
@@ -743,3 +743,32 @@ class TerminalView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProductView(APIView):
+    def get_evotor_token(self):
+        evotor_token = EvotorToken.objects.first()
+        if not evotor_token:
+            return None
+        return evotor_token.token
+
+    def get(self, request):
+        token = self.get_evotor_token()
+        if not token:
+            return Response('Токен не найден', status=status.HTTP_400_BAD_REQUEST)
+
+        url = 'https://api.evotor.ru/api/v1/inventories/stores/20200829-EF34-40C6-803A-06A5F50BB714/products'
+        headers = {
+            'X-Authorization': token
+        }
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            json_data = response.json()
+
+            for item in json_data:
+                uuid = item['uuid']
+                product, _ = Product.objects.update_or_create(uuid=uuid, defaults=item)
+            serializer = ProductSerializer(Product.objects.all(), many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)

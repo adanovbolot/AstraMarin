@@ -495,3 +495,28 @@ class Terminal(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Product(models.Model):
+    uuid = models.CharField(max_length=100)
+    code = models.CharField(max_length=100)
+    bar_codes = models.JSONField(default=list)
+    alco_codes = models.JSONField(default=list)
+    name = models.CharField(max_length=200)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.IntegerField()
+    cost_price = models.DecimalField(max_digits=10, decimal_places=3)
+    measure_name = models.CharField(max_length=50)
+    tax = models.CharField(max_length=50)
+    allow_to_sell = models.BooleanField()
+    description = models.TextField()
+    article_number = models.CharField(max_length=50)
+    parent_uuid = models.CharField(max_length=100)
+    group = models.BooleanField()
+    type = models.CharField(max_length=50)
+    alcohol_by_volume = models.DecimalField(max_digits=5, decimal_places=2)
+    alcohol_product_kind_code = models.IntegerField()
+    tare_volume = models.DecimalField(max_digits=5, decimal_places=2)
+
+    def __str__(self):
+        return self.name

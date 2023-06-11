@@ -47,5 +47,7 @@ urlpatterns = [
     path('shops/inventories/search/', views.ShopsView.as_view()),
 
     path('terminals/inventories/search/', views.TerminalView.as_view()),
+
+    path('product/inventories/search/', views.ProductView.as_view()),
 ]
 
